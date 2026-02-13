@@ -889,12 +889,20 @@ def render_html_grid(full_data):
     pan = full_data['astrolabe']
     yun = full_data.get('horoscope', {})
     
-    # 容错处理：获取四化信息
-    decadal_stem = yun.get('decadal', {}).get('heavenlyStem', '戊')
+    # 容错处理：确保yun包含必要的键
+    if 'age' not in yun:
+        yun['age'] = {'nominalAge': 0}
+    if 'decadal' not in yun:
+        yun['decadal'] = {'heavenlyStem': '戊', 'range': [0, 0]}
+    if 'yearly' not in yun:
+        yun['yearly'] = {'heavenlyStem': '戊'}
+    
+    # 获取四化信息
+    decadal_stem = yun['decadal']['heavenlyStem']
     decadal_muts = get_mutagens_by_stem(decadal_stem)
     decadal_map = {v: k for k, v in decadal_muts.items()} 
     
-    yearly_stem = yun.get('yearly', {}).get('heavenlyStem', '戊')
+    yearly_stem = yun['yearly']['heavenlyStem']
     yearly_muts = get_mutagens_by_stem(yearly_stem)
     yearly_map = {v: k for k, v in yearly_muts.items()}
     
@@ -972,7 +980,8 @@ def render_html_grid(full_data):
         
         # 运限指示
         luck_info = ''
-        current_nominal_age = yun['age']['nominalAge']
+        # 容错处理：获取当前虚岁
+        current_nominal_age = yun.get('age', {}).get('nominalAge', 0)
         if decadal_range[0] <= current_nominal_age <= decadal_range[1]:
             luck_info = '<div class="luck-indicator">当前大限</div>'
         
