@@ -886,8 +886,28 @@ def get_llm_response(messages):
 # 3. 渲染逻辑
 # ==========================================
 def render_html_grid(full_data):
+    """
+    渲染紫微斗数命盘网格
+    容错处理：如果full_data为None，返回一个默认的命盘
+    """
+    # 容错处理：如果full_data为None，返回默认命盘
+    if not full_data or 'astrolabe' not in full_data:
+        return """
+        <div class="ziwei-grid">
+            <div class="center-cell">
+                <div class="center-title">紫微斗数命盘</div>
+                <div class="bazi-tag">请先开始排盘</div>
+                <div class="center-info">
+                    <div>请在左侧边栏输入出生信息</div>
+                    <div>然后点击"开始排盘"按钮</div>
+                </div>
+            </div>
+        </div>
+        """
+    
     pan = full_data['astrolabe']
-    yun = full_data.get('horoscope', {})
+    # 容错处理：支持yun和horoscope两种键名
+    yun = full_data.get('yun', full_data.get('horoscope', {}))
     
     # 容错处理：确保yun包含必要的键
     if 'age' not in yun:
@@ -1160,84 +1180,104 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
         # 1. 渲染命盘
         st.markdown(render_html_grid(data), unsafe_allow_html=True)
         
-        # 2. 底部控制条
-        st.markdown('<div class="timeline-container">', unsafe_allow_html=True)
-        
-        decades = []
-        for p in data['astrolabe']['palaces']:
-            # 容错处理：获取大限信息
-            decadal = p.get('decadal', {})
-            decadal_range = decadal.get('range', [0, 0])
-            decadal_stem = decadal.get('heavenlyStem', '戊')
-            decadal_branch = decadal.get('earthlyBranch', '午')
+        # 2. 底部控制条 - 只有当data存在且包含astrolabe时才显示
+        if data and 'astrolabe' in data:
+            st.markdown('<div class="timeline-container">', unsafe_allow_html=True)
             
-            decades.append({
-                'range': decadal_range,
-                'ganzhi': f"{decadal_stem}{decadal_branch}"
-            })
-        decades.sort(key=lambda x: x['range'][0])
-        
-        # 容错处理：获取当前虚岁
-        current_nominal_age = data.get('horoscope', {}).get('age', {}).get('nominalAge', 0)
-        
-        st.markdown('<div class="timeline-label">1. 选择大限 (Decadal)</div>', unsafe_allow_html=True)
-        cols = st.columns(len(decades))
-        
-        selected_decade_idx = 0
-        for i, dec in enumerate(decades):
-            start, end = dec['range']
-            label = f"{start}-{end}\n{dec['ganzhi']}"
-            is_active = (start <= current_nominal_age <= end)
-            if is_active: selected_decade_idx = i
-            
-            if cols[i].button(label, key=f"dec_{i}", type="primary" if is_active else "secondary", use_container_width=True):
-                # 反推农历生年
-                calculated_birth_year = current_target_year - current_nominal_age + 1
-                new_target_year = calculated_birth_year + start - 1
-                st.session_state['target_year'] = new_target_year
+            # 重新计算大限和流年
+            # 1. 从命盘数据中获取大限信息
+            decades = []
+            for p in data['astrolabe']['palaces']:
+                # 获取大限范围
+                decadal_range = p.get('decadal', {}).get('range', [0, 0])
+                if decadal_range[0] == 0 and decadal_range[1] == 0:
+                    continue
                 
-                # 刷新数据
-                new_data = get_ziwei_data(
-                    st.session_state['birth_date_str'], 
-                    st.session_state['birth_time'], 
-                    st.session_state['gender'], 
-                    new_target_year,
-                    is_lunar=st.session_state['is_lunar'],
-                    is_leap=st.session_state['is_leap']
-                )
-                st.session_state['ziwei_data'] = new_data
-                st.rerun()
+                # 计算大限干支 - 基于宫位的天干地支
+                gan = p.get('heavenlyStem', '戊')
+                zhi = p.get('earthlyBranch', '午')
+                ganzhi = f"{gan}{zhi}"
+                
+                decades.append({
+                    'range': decadal_range,
+                    'ganzhi': ganzhi
+                })
+            
+            # 按大限开始年龄排序
+            decades.sort(key=lambda x: x['range'][0])
+            
+            # 2. 计算当前虚岁和出生年份
+            # 容错处理：支持yun和horoscope两种键名
+            yun_data = data.get('yun', data.get('horoscope', {}))
+            current_nominal_age = yun_data.get('age', {}).get('nominalAge', 0)
+            
+            if current_nominal_age == 0:
+                # 如果没有虚岁信息，使用当前年份减去出生年份加1
+                try:
+                    birth_date = datetime.datetime.strptime(st.session_state['birth_date_str'], '%Y-%m-%d')
+                    current_nominal_age = datetime.datetime.now().year - birth_date.year + 1
+                except:
+                    current_nominal_age = 26  # 默认26岁
+            
+            # 计算出生年份
+            calculated_birth_year = current_target_year - current_nominal_age + 1
+            
+            st.markdown('<div class="timeline-label">1. 选择大限 (Decadal)</div>', unsafe_allow_html=True)
+            cols = st.columns(len(decades))
+            
+            selected_decade_idx = 0
+            for i, dec in enumerate(decades):
+                start, end = dec['range']
+                label = f"{start}-{end}\n{dec['ganzhi']}"
+                is_active = (start <= current_nominal_age <= end)
+                if is_active: selected_decade_idx = i
+                
+                if cols[i].button(label, key=f"dec_{i}", type="primary" if is_active else "secondary", use_container_width=True):
+                    # 计算新的目标年份
+                    new_target_year = calculated_birth_year + start - 1
+                    st.session_state['target_year'] = new_target_year
+                    
+                    # 刷新数据
+                    new_data = get_ziwei_data(
+                        st.session_state['birth_date_str'], 
+                        st.session_state['birth_time'], 
+                        st.session_state['gender'], 
+                        new_target_year,
+                        is_lunar=st.session_state['is_lunar'],
+                        is_leap=st.session_state['is_leap']
+                    )
+                    st.session_state['ziwei_data'] = new_data
+                    st.rerun()
 
-        st.markdown('<div class="timeline-label" style="margin-top:10px;">2. 选择流年 (Yearly)</div>', unsafe_allow_html=True)
-        sel_start, sel_end = decades[selected_decade_idx]['range']
-        
-        calculated_birth_year = current_target_year - current_nominal_age + 1
-        
-        years_in_decade = []
-        for age in range(sel_start, sel_end + 1):
-            y = calculated_birth_year + (age - 1)
-            years_in_decade.append({'year': y, 'age': age, 'ganzhi': get_ganzhi_for_year(y)})
-            
-        cols_y = st.columns(len(years_in_decade))
-        for i, item in enumerate(years_in_decade):
-            label = f"{item['year']}\n{item['ganzhi']} ({item['age']}岁)"
-            is_selected = (item['year'] == current_target_year)
-            
-            if cols_y[i].button(label, key=f"year_{item['year']}", type="primary" if is_selected else "secondary", use_container_width=True):
-                st.session_state['target_year'] = item['year']
+            st.markdown('<div class="timeline-label" style="margin-top:10px;">2. 选择流年 (Yearly)</div>', unsafe_allow_html=True)
+            if decades:
+                sel_start, sel_end = decades[selected_decade_idx]['range']
                 
-                new_data = get_ziwei_data(
-                    st.session_state['birth_date_str'], 
-                    st.session_state['birth_time'], 
-                    st.session_state['gender'], 
-                    item['year'],
-                    is_lunar=st.session_state['is_lunar'],
-                    is_leap=st.session_state['is_leap']
-                )
-                st.session_state['ziwei_data'] = new_data
-                st.rerun()
-                
-        st.markdown('</div>', unsafe_allow_html=True)
+                years_in_decade = []
+                for age in range(sel_start, sel_end + 1):
+                    y = calculated_birth_year + (age - 1)
+                    years_in_decade.append({'year': y, 'age': age, 'ganzhi': get_ganzhi_for_year(y)})
+                    
+                cols_y = st.columns(len(years_in_decade))
+                for i, item in enumerate(years_in_decade):
+                    label = f"{item['year']}\n{item['ganzhi']} ({item['age']}岁)"
+                    is_selected = (item['year'] == current_target_year)
+                    
+                    if cols_y[i].button(label, key=f"year_{item['year']}", type="primary" if is_selected else "secondary", use_container_width=True):
+                        st.session_state['target_year'] = item['year']
+                        
+                        new_data = get_ziwei_data(
+                            st.session_state['birth_date_str'], 
+                            st.session_state['birth_time'], 
+                            st.session_state['gender'], 
+                            item['year'],
+                            is_lunar=st.session_state['is_lunar'],
+                            is_leap=st.session_state['is_leap']
+                        )
+                        st.session_state['ziwei_data'] = new_data
+                        st.rerun()
+                        
+            st.markdown('</div>', unsafe_allow_html=True)
         
         # 提示用户可以切换到AI咨询页面
         st.markdown("---")
