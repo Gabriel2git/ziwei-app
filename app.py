@@ -4,8 +4,148 @@ import datetime
 import json
 import os
 import requests
+import math
 from openai import OpenAI
-from src.solar_time_calculator import solar_time_to_chinese_hour
+
+# 内联太阳时计算模块
+def calculate_true_solar_time(year, month, day, hour, minute, longitude=120.033):
+    """
+    计算真太阳时间
+    
+    参数:
+        year: 年份
+        month: 月份
+        day: 日期
+        hour: 小时
+        minute: 分钟
+        longitude: 地理经度，默认120.033（上海）
+    
+    返回:
+        tuple: (真太阳时小时, 真太阳时分钟)
+    """
+    from datetime import datetime as dt
+    # 1. 计算从2000年1月1日起的天数
+    date = dt(year, month, day, hour, minute)
+    epoch = dt(2000, 1, 1, 12, 0)  # 2000年1月1日12:00 UTC
+    days_since_epoch = (date - epoch).total_seconds() / (24 * 3600)
+    
+    # 2. 计算太阳赤纬（简化计算）
+    declination = 23.45 * math.sin(math.radians(360/365 * (days_since_epoch + 284)))
+    
+    # 3. 计算时差（Equation of Time，简化计算）
+    B = math.radians(360/365 * (days_since_epoch - 81))
+    equation_of_time = 9.87 * math.sin(2*B) - 7.53 * math.cos(B) - 1.5 * math.sin(B)
+    
+    # 4. 计算时区修正
+    time_zone_correction = (longitude - 120) * 4
+    
+    # 5. 计算真太阳时间
+    total_minutes = hour * 60 + minute + equation_of_time + time_zone_correction
+    
+    # 6. 调整到0-1440分钟范围内
+    total_minutes = total_minutes % 1440
+    if total_minutes < 0:
+        total_minutes += 1440
+    
+    # 7. 转换为小时和分钟
+    true_hour = int(total_minutes // 60)
+    true_minute = int(round(total_minutes % 60))
+    
+    # 处理分钟进位
+    if true_minute == 60:
+        true_hour = (true_hour + 1) % 24
+        true_minute = 0
+    
+    return true_hour, true_minute
+
+def get_chinese_hour(hour, minute):
+    """
+    根据时间获取对应的时辰
+    
+    参数:
+        hour: 小时
+        minute: 分钟
+    
+    返回:
+        tuple: (时辰名称, 时辰索引)
+    """
+    # 时辰对应表
+    chinese_hours = [
+        ("子时", 11),  # 23:00-01:00
+        ("丑时", 1),   # 01:00-03:00
+        ("寅时", 2),   # 03:00-05:00
+        ("卯时", 3),   # 05:00-07:00
+        ("辰时", 4),   # 07:00-09:00
+        ("巳时", 5),   # 09:00-11:00
+        ("午时", 6),   # 11:00-13:00
+        ("未时", 7),   # 13:00-15:00
+        ("申时", 8),   # 15:00-17:00
+        ("酉时", 9),   # 17:00-19:00
+        ("戌时", 10),  # 19:00-21:00
+        ("亥时", 11),  # 21:00-23:00
+    ]
+    
+    # 计算当前时间的分钟数
+    total_minutes = hour * 60 + minute
+    
+    # 确定对应的时辰
+    if 23*60 <= total_minutes or total_minutes < 1*60:
+        return chinese_hours[0]  # 子时
+    elif 1*60 <= total_minutes < 3*60:
+        return chinese_hours[1]  # 丑时
+    elif 3*60 <= total_minutes < 5*60:
+        return chinese_hours[2]  # 寅时
+    elif 5*60 <= total_minutes < 7*60:
+        return chinese_hours[3]  # 卯时
+    elif 7*60 <= total_minutes < 9*60:
+        return chinese_hours[4]  # 辰时
+    elif 9*60 <= total_minutes < 11*60:
+        return chinese_hours[5]  # 巳时
+    elif 11*60 <= total_minutes < 13*60:
+        return chinese_hours[6]  # 午时
+    elif 13*60 <= total_minutes < 15*60:
+        return chinese_hours[7]  # 未时
+    elif 15*60 <= total_minutes < 17*60:
+        return chinese_hours[8]  # 申时
+    elif 17*60 <= total_minutes < 19*60:
+        return chinese_hours[9]  # 酉时
+    elif 19*60 <= total_minutes < 21*60:
+        return chinese_hours[10]  # 戌时
+    else:  # 21*60 <= total_minutes < 23*60
+        return chinese_hours[11]  # 亥时
+
+def solar_time_to_chinese_hour(year, month, day, hour, minute, longitude=120.033):
+    """
+    从钟表时间到真太阳时间，再到时辰的完整转换
+    
+    参数:
+        year: 年份
+        month: 月份
+        day: 日期
+        hour: 小时
+        minute: 分钟
+        longitude: 地理经度，默认120.033（上海）
+    
+    返回:
+        dict: 包含所有计算结果的字典
+    """
+    # 计算真太阳时间
+    true_hour, true_minute = calculate_true_solar_time(year, month, day, hour, minute, longitude)
+    
+    # 获取对应的时辰
+    chinese_hour_name, chinese_hour_index = get_chinese_hour(true_hour, true_minute)
+    
+    # 构建结果字典
+    result = {
+        "clock_time": f"{year}-{month}-{day} {hour:02d}:{minute:02d}",
+        "true_solar_time": f"{year}-{month}-{day} {true_hour:02d}:{true_minute:02d}",
+        "longitude": longitude,
+        "chinese_hour": chinese_hour_name,
+        "chinese_hour_index": chinese_hour_index,
+        "time_difference": f"{true_hour - hour:+.1f}小时{true_minute - minute:+.1f}分钟"
+    }
+    
+    return result
 
 # 设置页面导航
 st.set_page_config(
@@ -17,7 +157,7 @@ st.set_page_config(
 # 创建页面导航
 page = st.sidebar.radio(
     "选择页面",
-    ["命盘显示", "AI 命理咨询"],
+    ["命盘显示", "AI 命理咨询师"],
     index=0
 )
 
@@ -33,15 +173,20 @@ st.set_page_config(
 CSS_STYLE = """
 <style>
     /* 1. 强制侧边栏宽度 */
-    [data-testid="stSidebar"] { min-width: 360px !important; max-width: 600px !important; }
+    [data-testid="stSidebar"] { min-width: 400px !important; max-width: 600px !important; }
     div[data-testid="stSidebarHeader"] { display: none !important; height: 0 !important; }
     [data-testid="collapsedControl"] { display: none !important; }
     [data-testid="stSidebarUserContent"] { padding-top: 2rem !important; }
     
     .block-container { 
-        padding-top: 1rem; 
+        padding-top: 3rem; 
         padding-bottom: 5rem; 
         max-width: 100%; 
+    }
+    
+    /* 2. 确保标题不被遮盖 */
+    h3 { 
+        margin-top: 2rem !important; 
     }
 
     /* 2. 紫微网格 - 文墨天机样式 */
@@ -409,19 +554,151 @@ def get_ziwei_data(birthday, hour_index, gender, target_year, is_lunar=False, is
             "targetYear": target_year
         }
         
-        # 发送 POST 请求到 API 服务
-        response = requests.post("http://localhost:3000/api/ziwei", json=payload, timeout=10)
-        
-        # 检查响应状态码
-        if response.status_code != 200:
-            st.error(f"API Error: {response.status_code} - {response.json().get('error', 'Unknown error')}")
-            return None
-        
-        # 返回解析后的 JSON 数据
-        return response.json()
-    except requests.RequestException as e:
-        st.error(f"Request Error: {e}")
-        return None
+        # 尝试连接到本地 API 服务
+        try:
+            # 发送 POST 请求到 API 服务
+            response = requests.post("http://localhost:3000/api/ziwei", json=payload, timeout=5)
+            
+            # 检查响应状态码
+            if response.status_code == 200:
+                # 返回解析后的 JSON 数据
+                return response.json()
+        except requests.RequestException:
+            # 本地服务不可用，使用模拟数据
+            st.warning("本地紫微斗数计算服务不可用，使用模拟数据进行演示")
+            
+            # 模拟紫微斗数数据
+            mock_data = {
+                "astrolabe": {
+                    "solarDate": "2000-05-23",
+                    "lunarDate": "庚辰年四月二十",
+                    "chineseDate": "庚辰年辛巳月壬午日",
+                    "time": "巳时",
+                    "timeRange": "09:00~11:00",
+                    "gender": gender,
+                    "soul": "文曲",
+                    "body": "天机",
+                    "earthlyBranchOfBodyPalace": "午",
+                    "palaces": [
+                        {
+                            "name": "命宫",
+                            "heavenlyStem": "壬",
+                            "earthlyBranch": "午",
+                            "majorStars": [{"name": "紫微", "brightness": "庙"}],
+                            "minorStars": [{"name": "左辅", "brightness": "庙"}, {"name": "右弼", "brightness": "庙"}],
+                            "adjectiveStars": [{"name": "三台"}, {"name": "八座"}],
+                            "decadal": {"range": [1, 10]}
+                        },
+                        {
+                            "name": "兄弟宫",
+                            "heavenlyStem": "癸",
+                            "earthlyBranch": "未",
+                            "majorStars": [{"name": "天机", "brightness": "旺"}],
+                            "minorStars": [{"name": "天魁", "brightness": "庙"}],
+                            "adjectiveStars": [{"name": "龙池"}, {"name": "凤阁"}],
+                            "decadal": {"range": [11, 20]}
+                        },
+                        {
+                            "name": "夫妻宫",
+                            "heavenlyStem": "甲",
+                            "earthlyBranch": "申",
+                            "majorStars": [{"name": "太阳", "brightness": "旺"}, {"name": "太阴", "brightness": "庙"}],
+                            "minorStars": [{"name": "天钺", "brightness": "庙"}],
+                            "adjectiveStars": [{"name": "恩光"}, {"name": "天贵"}],
+                            "decadal": {"range": [21, 30]}
+                        },
+                        {
+                            "name": "子女宫",
+                            "heavenlyStem": "乙",
+                            "earthlyBranch": "酉",
+                            "majorStars": [{"name": "武曲", "brightness": "庙"}, {"name": "贪狼", "brightness": "庙"}],
+                            "minorStars": [{"name": "文昌", "brightness": "庙"}],
+                            "adjectiveStars": [{"name": "红鸾"}, {"name": "天喜"}],
+                            "decadal": {"range": [31, 40]}
+                        },
+                        {
+                            "name": "财帛宫",
+                            "heavenlyStem": "丙",
+                            "earthlyBranch": "戌",
+                            "majorStars": [{"name": "天同", "brightness": "庙"}, {"name": "巨门", "brightness": "旺"}],
+                            "minorStars": [{"name": "文曲", "brightness": "庙"}],
+                            "adjectiveStars": [{"name": "天姚"}, {"name": "咸池"}],
+                            "decadal": {"range": [41, 50]}
+                        },
+                        {
+                            "name": "疾厄宫",
+                            "heavenlyStem": "丁",
+                            "earthlyBranch": "亥",
+                            "majorStars": [{"name": "天相", "brightness": "庙"}],
+                            "minorStars": [{"name": "禄存", "brightness": "庙"}],
+                            "adjectiveStars": [{"name": "天刑"}, {"name": "天虚"}],
+                            "decadal": {"range": [51, 60]}
+                        },
+                        {
+                            "name": "迁移宫",
+                            "heavenlyStem": "戊",
+                            "earthlyBranch": "子",
+                            "majorStars": [{"name": "破军", "brightness": "旺"}],
+                            "minorStars": [{"name": "天马", "brightness": "庙"}],
+                            "adjectiveStars": [{"name": "天哭"}, {"name": "天虚"}],
+                            "decadal": {"range": [61, 70]}
+                        },
+                        {
+                            "name": "仆役宫",
+                            "heavenlyStem": "己",
+                            "earthlyBranch": "丑",
+                            "majorStars": [{"name": "七杀", "brightness": "庙"}],
+                            "minorStars": [{"name": "铃星", "brightness": "庙"}],
+                            "adjectiveStars": [{"name": "孤辰"}, {"name": "寡宿"}],
+                            "decadal": {"range": [71, 80]}
+                        },
+                        {
+                            "name": "官禄宫",
+                            "heavenlyStem": "庚",
+                            "earthlyBranch": "寅",
+                            "majorStars": [{"name": "贪狼", "brightness": "庙"}],
+                            "minorStars": [{"name": "火星", "brightness": "庙"}],
+                            "adjectiveStars": [{"name": "破碎"}, {"name": "蜚廉"}],
+                            "decadal": {"range": [81, 90]}
+                        },
+                        {
+                            "name": "田宅宫",
+                            "heavenlyStem": "辛",
+                            "earthlyBranch": "卯",
+                            "majorStars": [{"name": "巨门", "brightness": "旺"}],
+                            "minorStars": [{"name": "地空", "brightness": "陷"}],
+                            "adjectiveStars": [{"name": "天德"}, {"name": "解神"}],
+                            "decadal": {"range": [91, 100]}
+                        },
+                        {
+                            "name": "福德宫",
+                            "heavenlyStem": "壬",
+                            "earthlyBranch": "辰",
+                            "majorStars": [{"name": "太阳", "brightness": "庙"}],
+                            "minorStars": [{"name": "地劫", "brightness": "陷"}],
+                            "adjectiveStars": [{"name": "天使"}, {"name": "封诰"}],
+                            "decadal": {"range": [101, 110]}
+                        },
+                        {
+                            "name": "父母宫",
+                            "heavenlyStem": "癸",
+                            "earthlyBranch": "巳",
+                            "majorStars": [{"name": "太阴", "brightness": "庙"}],
+                            "minorStars": [{"name": "天空", "brightness": "陷"}],
+                            "adjectiveStars": [{"name": "天伤"}, {"name": "天使"}],
+                            "decadal": {"range": [111, 120]}
+                        }
+                    ]
+                },
+                "yun": {
+                    "age": {
+                        "nominalAge": 26
+                    }
+                }
+            }
+            
+            return mock_data
+            
     except Exception as e:
         st.error(f"Error: {e}")
         return None
@@ -537,6 +814,57 @@ def parse_ziwei_to_prompt(full_data):
     data_context = f"【基本信息】\n{base_info}\n\n【命盘十二宫】\n{palace_text}"
     
     return system_prompt, data_context
+
+def generate_master_prompt(user_question, full_data, target_year):
+    """
+    紫微斗数专用：动态提示词生成引擎
+    基于用户问题和命盘数据，生成带有强制思考路径的System Prompt
+    """
+    pan = full_data['astrolabe']
+    yun = full_data.get('horoscope', {})
+    
+    # 提取四化信息
+    yearly_mutagen = []
+    if yun.get('yearly') and yun['yearly'].get('heavenlyStem'):
+        yearly_stem = yun['yearly']['heavenlyStem']
+        yearly_muts = get_mutagens_by_stem(yearly_stem)
+        yearly_mutagen = [yearly_muts['禄'], yearly_muts['权'], yearly_muts['科'], yearly_muts['忌']]
+    
+    # 构建核心数据块
+    chart_context = f"""
+    【命盘核心参数】
+    命主：{pan.get('soul', '未知')} | 身主：{pan.get('body', '未知')}
+    当前流年：{target_year}年 | 流年四化：{yearly_mutagen} (禄权科忌)
+    """
+    
+    # 组装 System Prompt (思维链核心)
+    system_prompt = f"""
+    # Role: 资深紫微斗数命理师
+    
+    # Core Philosophy (十六字真言)
+    1. **宫位定人事**：先看本宫，次看对宫，再看三合。
+    2. **星情断吉凶**：吉星（如禄存、魁钺）可解凶，煞星（如羊陀火铃）会破格。
+    3. **四化寻契机**：重点关注流年化忌冲入的宫位，那是今年最薄弱的环节。
+    4. **行运看变化**：本命盘决定上限，流年盘决定今年的吉凶应期。
+
+    # User Data
+    {chart_context}
+
+    # Task
+    用户问题："{user_question}"
+    
+    # Response Guidelines
+    请严格遵循以下思考路径：
+    1. 定位核心宫位及三方四正
+    2. 分析星曜组合与格局
+    3. 寻找四化引动点（特别是化忌的冲照）
+    4. 结合大限与流年推断时间节点
+    
+    请用温暖、客观、建设性的语言输出建议。
+    遇到凶象（如化忌、空劫），不要只说不好，要给出“趋避建议”。
+    """
+    
+    return system_prompt
 
 def get_llm_response(messages):
     api_key = os.getenv("DASHSCOPE_API_KEY")
@@ -734,7 +1062,7 @@ with st.sidebar:
     # 根据历法类型显示不同的时间输入选项
     if cal_type == "公历":
         # 公历：选择具体的小时和分钟
-        st.markdown("### 具体时间")
+        st.markdown("具体时间", unsafe_allow_html=True)
         col_h, col_m = st.columns([1, 1])
         with col_h:
             sel_hour = st.selectbox("时", list(range(24)), index=10)
@@ -754,7 +1082,6 @@ with st.sidebar:
         sel_minute = 0
     g = st.radio("性别", ["女", "男"], horizontal=True)
     
-    st.markdown("---")
     btn = st.button("🚀 开始排盘", type="primary", use_container_width=True)
 
 # ==========================================
@@ -897,9 +1224,9 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
         
         # 提示用户可以切换到AI咨询页面
         st.markdown("---")
-        st.info("💡 想要咨询AI命理师？请在左侧边栏切换到 'AI 命理咨询' 页面")
-        
-    elif page == "AI 命理咨询":
+        st.info("💡 想要咨询AI命理师？请在左侧边栏切换到 'AI 命理咨询师' 页面")
+
+    elif page == "AI 命理咨询师":
         # --- AI 对话 ---
         st.subheader(f"🤖 AI 命理咨询师")
         
@@ -914,10 +1241,33 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
                 st.markdown(prompt)
             st.session_state.messages.append({"role": "user", "content": prompt})
             
+            # 生成动态 System Prompt
+            if "ziwei_data" in st.session_state and st.session_state["ziwei_data"]:
+                target_year = st.session_state.get("target_year", datetime.datetime.now().year)
+                system_prompt = generate_master_prompt(prompt, st.session_state["ziwei_data"], target_year)
+            else:
+                # 没有命盘数据时的默认提示
+                system_prompt = """
+                # Role: 紫微斗数大师 (Zi Wei Dou Shu Expert)
+                你是一位精通钦天门与三合派理法的命理专家。
+                由于没有提供具体的命盘数据，我将基于紫微斗数的基本原理为你提供一般性的指导。
+                请提供你的出生信息，以便我能为你提供更准确的命理分析。
+                """
+            
+            # 构建包含动态 System Prompt 的消息列表
+            dynamic_messages = [
+                {"role": "system", "content": system_prompt}
+            ]
+            
+            # 添加用户和助手的历史消息（排除之前的 system 消息）
+            for msg in st.session_state.messages:
+                if msg["role"] != "system":
+                    dynamic_messages.append(msg)
+            
             with st.chat_message("assistant"):
                 message_placeholder = st.empty()
                 full_response = ""
-                stream = get_llm_response(st.session_state.messages)
+                stream = get_llm_response(dynamic_messages)
                 if stream:
                     for chunk in stream:
                         if chunk.choices[0].delta.content:
