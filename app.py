@@ -887,13 +887,14 @@ def get_llm_response(messages):
 # ==========================================
 def render_html_grid(full_data):
     pan = full_data['astrolabe']
-    yun = full_data['horoscope']
+    yun = full_data.get('horoscope', {})
     
-    decadal_stem = yun['decadal']['heavenlyStem']
+    # 容错处理：获取四化信息
+    decadal_stem = yun.get('decadal', {}).get('heavenlyStem', '戊')
     decadal_muts = get_mutagens_by_stem(decadal_stem)
     decadal_map = {v: k for k, v in decadal_muts.items()} 
     
-    yearly_stem = yun['yearly']['heavenlyStem']
+    yearly_stem = yun.get('yearly', {}).get('heavenlyStem', '戊')
     yearly_muts = get_mutagens_by_stem(yearly_stem)
     yearly_map = {v: k for k, v in yearly_muts.items()}
     
