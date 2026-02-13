@@ -1,0 +1,16 @@
+# 环境变量文件
+.env
+.env.local
+.env.*.local
+
+# 敏感配置文件
+.streamlit/secrets.toml
+
+# 依赖目录
+node_modules/
+.venv/
+__pycache__/
+
+# IDE配置
+.idea/
+*.iml
