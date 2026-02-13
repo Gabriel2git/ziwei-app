@@ -1,0 +1,7 @@
+# 核心依赖
+streamlit
+openai
+requests
+
+# 其他依赖
+python-dotenv
