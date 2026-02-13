@@ -1,4 +1,7 @@
+# 核心依赖
 streamlit
 openai
-iztro
 requests
+
+# 其他依赖
+python-dotenv
