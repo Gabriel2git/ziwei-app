@@ -147,7 +147,7 @@ CSS_STYLE = """
         justify-content: center;
         color: #333; 
         line-height: 1.4; 
-        font-size: 0.8em;
+        font-size: 0.64em;
         width: 100%;
         position: relative;
         z-index: 1;
@@ -465,26 +465,26 @@ CSS_STYLE = """
         }
         
         .center-detail {
-            font-size: 0.55em !important;
+            font-size: 0.44em !important;
         }
         
         .center-title {
-            font-size: 0.7em !important;
+            font-size: 0.56em !important;
         }
         
         .bazi-tag {
-            font-size: 0.7em !important;
+            font-size: 0.56em !important;
             padding: 1px 4px !important;
         }
         
         .center-info {
-            font-size: 0.7em !important;
+            font-size: 0.56em !important;
             line-height: 1.2 !important;
             margin: 5px 0 !important;
         }
         
         .mutagen-legend {
-            font-size: 0.6em !important;
+            font-size: 0.48em !important;
             margin-top: 5px !important;
         }
         
@@ -529,7 +529,7 @@ CSS_STYLE = """
         }
         
         .center-detail {
-            font-size: 0.5em !important;
+            font-size: 0.4em !important;
         }
         
         .star-major {
