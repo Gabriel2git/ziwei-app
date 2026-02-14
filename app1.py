@@ -1016,6 +1016,39 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
     elif page == "AI 命理咨询师":
         st.subheader(f"🤖 AI 命理咨询师")
         
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            if st.button("💾 保存对话", use_container_width=True):
+                if st.session_state.get("messages"):
+                    chat_data = {
+                        "birth_date": st.session_state.get("birth_date_str", ""),
+                        "gender": st.session_state.get("gender", ""),
+                        "messages": [msg for msg in st.session_state.messages if msg["role"] != "system"],
+                        "timestamp": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    }
+                    chat_json = json.dumps(chat_data, ensure_ascii=False, indent=2)
+                    st.download_button(
+                        label="下载对话记录",
+                        data=chat_json.encode('utf-8'),
+                        file_name=f"ziwei_chat_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
+                        mime="application/json"
+                    )
+                else:
+                    st.warning("没有对话记录可保存")
+        
+        with col2:
+            uploaded_file = st.file_uploader("📂 加载对话", type=['json'])
+            if uploaded_file is not None:
+                try:
+                    chat_data = json.load(uploaded_file)
+                    st.session_state.messages = chat_data.get("messages", [])
+                    st.success(f"成功加载 {len(st.session_state.messages)} 条对话记录")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"加载失败: {e}")
+        
+        st.markdown("---")
+        
         if "messages" not in st.session_state:
             st.session_state.messages = []
         
