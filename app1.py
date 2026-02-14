@@ -1087,15 +1087,20 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
                     st.warning("没有对话记录可保存")
         
         with col2:
-            uploaded_file = st.file_uploader("📂 加载对话", type=['json'])
+            uploaded_file = st.file_uploader("📂 加载对话", type=['json'], key="chat_uploader")
             if uploaded_file is not None:
                 try:
-                    chat_data = json.load(uploaded_file)
+                    file_content = uploaded_file.getvalue().decode('utf-8')
+                    chat_data = json.loads(file_content)
                     st.session_state.messages = chat_data.get("messages", [])
                     st.success(f"成功加载 {len(st.session_state.messages)} 条对话记录")
                     st.rerun()
+                except json.JSONDecodeError as e:
+                    st.error(f"JSON 解析失败: {e}")
                 except Exception as e:
                     st.error(f"加载失败: {e}")
+                    import traceback
+                    st.error(traceback.format_exc())
         
         st.info("💡 想要查看命盘？请在左侧边栏切换到 '命盘显示' 页面")
 
