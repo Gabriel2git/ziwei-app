@@ -370,6 +370,15 @@ CSS_STYLE = """
         border: 1px solid #ddd;
     }
     
+    .timeline-scroll-container {
+        display: flex;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+        gap: 8px;
+        padding: 5px 0;
+        -webkit-overflow-scrolling: touch;
+    }
+    
     .timeline-label {
         font-weight: bold;
         color: #5d4037;
@@ -1122,57 +1131,83 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
             
             st.markdown('<div class="timeline-label">1. 选择大限 (Decadal)</div>', unsafe_allow_html=True)
             
+            decade_options = []
             selected_decade_idx = 0
             for i, dec in enumerate(decades):
                 start, end = dec['range']
                 ganzhi = dec['ganzhi']
-                label = f"{start}-{end}\n{ganzhi}"
-                is_active = (start <= current_nominal_age <= end)
-                if is_active: selected_decade_idx = i
+                label = f"{start}-{end}岁 ({ganzhi})"
+                decade_options.append(label)
+                if start <= current_nominal_age <= end:
+                    selected_decade_idx = i
+            
+            selected_decade_label = st.selectbox(
+                "选择大限",
+                decade_options,
+                index=selected_decade_idx,
+                key="decade_select",
+                label_visibility="collapsed"
+            )
+            
+            selected_decade_index = decade_options.index(selected_decade_label)
+            if selected_decade_index != selected_decade_idx:
+                sel_dec = decades[selected_decade_index]
+                new_target_year = calculated_birth_year + sel_dec['range'][0] - 1
+                st.session_state['target_year'] = new_target_year
                 
-                if st.button(label, key=f"dec_{i}", type="primary" if is_active else "secondary", use_container_width=False):
-                    new_target_year = calculated_birth_year + start - 1
-                    st.session_state['target_year'] = new_target_year
-                    
-                    new_data = get_ziwei_data(
-                        st.session_state['birth_date_str'],
-                        st.session_state['birth_time'],
-                        st.session_state['gender'],
-                        new_target_year,
-                        is_lunar=st.session_state['is_lunar'],
-                        is_leap=st.session_state['is_leap']
-                    )
-                    if new_data:
-                        st.session_state['ziwei_data'] = new_data
-                        st.rerun()
+                new_data = get_ziwei_data(
+                    st.session_state['birth_date_str'],
+                    st.session_state['birth_time'],
+                    st.session_state['gender'],
+                    new_target_year,
+                    is_lunar=st.session_state['is_lunar'],
+                    is_leap=st.session_state['is_leap']
+                )
+                if new_data:
+                    st.session_state['ziwei_data'] = new_data
+                    st.rerun()
 
             st.markdown('<div class="timeline-label" style="margin-top:10px;">2. 选择流年 (Yearly)</div>', unsafe_allow_html=True)
             if decades:
                 sel_start, sel_end = decades[selected_decade_idx]['range']
                 
                 years_in_decade = []
+                year_options = []
                 for age in range(sel_start, sel_end + 1):
                     y = calculated_birth_year + (age - 1)
-                    years_in_decade.append({'year': y, 'age': age, 'ganzhi': get_ganzhi_for_year(y)})
-                    
+                    ganzhi = get_ganzhi_for_year(y)
+                    years_in_decade.append({'year': y, 'age': age, 'ganzhi': ganzhi})
+                    year_options.append(f"{y}年 ({ganzhi}, {age}岁)")
+                
+                current_year_index = 0
                 for i, item in enumerate(years_in_decade):
-                    label = f"{item['year']}\n{item['ganzhi']} ({item['age']}岁)"
-                    is_selected = (item['year'] == current_target_year)
+                    if item['year'] == current_target_year:
+                        current_year_index = i
+                
+                selected_year_label = st.selectbox(
+                    "选择流年",
+                    year_options,
+                    index=current_year_index,
+                    key="year_select",
+                    label_visibility="collapsed"
+                )
+                
+                selected_year_index = year_options.index(selected_year_label)
+                if selected_year_index != current_year_index:
+                    item = years_in_decade[selected_year_index]
+                    st.session_state['target_year'] = item['year']
                     
-                    if st.button(label, key=f"year_{item['year']}", type="primary" if is_selected else "secondary", use_container_width=False):
-                        st.session_state['target_year'] = item['year']
-                        
-                        new_data = get_ziwei_data(
-                            st.session_state['birth_date_str'],
-                            st.session_state['birth_time'],
-                            st.session_state['gender'],
-                            item['year'],
-                            is_lunar=st.session_state['is_lunar'],
-                            is_leap=st.session_state['is_leap']
-                        )
-                        if new_data:
-                            st.session_state['ziwei_data'] = new_data
-                            st.rerun()
+                    new_data = get_ziwei_data(
+                        st.session_state['birth_date_str'],
+                        st.session_state['birth_time'],
+                        st.session_state['gender'],
+                        item['year'],
+                        is_lunar=st.session_state['is_lunar'],
+                        is_leap=st.session_state['is_leap']
+                    )
+                    if new_data:
+                        st.session_state['ziwei_data'] = new_data
+                        st.rerun()
                         
             st.markdown('</div>', unsafe_allow_html=True)
         
