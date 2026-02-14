@@ -109,7 +109,7 @@ CSS_STYLE = """
         box-sizing: border-box;
         margin-top: 20px; 
         margin-bottom: 20px;
-        min-height: 500px;
+        min-height: 200px;
     }
 
     .palace-cell {
@@ -410,7 +410,7 @@ CSS_STYLE = """
         .ziwei-grid {
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(4, 1fr);
-            min-height: 350px !important;
+            min-height: 150px !important;
             margin-top: 10px;
             margin-bottom: 10px;
         }
@@ -458,7 +458,7 @@ CSS_STYLE = """
         .ziwei-grid {
             gap: 1px;
             border: 2px solid #000;
-            min-height: 300px !important;
+            min-height: 120px !important;
         }
         
         .palace-cell {
