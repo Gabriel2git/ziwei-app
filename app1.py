@@ -109,19 +109,19 @@ CSS_STYLE = """
         box-sizing: border-box;
         margin-top: 20px; 
         margin-bottom: 20px;
-        min-height: 800px;
+        min-height: 600px;
     }
 
     .palace-cell {
         background-color: #fff;
         border: 1px solid #ddd;
-        padding: 8px;
+        padding: 5px;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         overflow: hidden; 
         position: relative;
-        font-size: 0.8em;
+        font-size: 0.75em;
         line-height: 1.2;
     }
 
@@ -410,7 +410,7 @@ CSS_STYLE = """
         .ziwei-grid {
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(4, 1fr);
-            min-height: 500px;
+            min-height: 350px;
             margin-top: 10px;
             margin-bottom: 10px;
         }
@@ -418,36 +418,36 @@ CSS_STYLE = """
         .center-cell {
             grid-column: 2 / 4;
             grid-row: 2 / 4;
-            padding: 10px;
+            padding: 8px;
         }
         
         .palace-cell {
-            padding: 3px;
-            font-size: 0.6em;
+            padding: 2px;
+            font-size: 0.55em;
         }
         
         .star-major {
-            font-size: 1.0em;
+            font-size: 0.9em;
         }
         
         .star-minor {
-            font-size: 0.9em;
-        }
-        
-        .star-adj {
             font-size: 0.8em;
         }
         
-        .center-detail {
+        .star-adj {
             font-size: 0.7em;
         }
         
+        .center-detail {
+            font-size: 0.6em;
+        }
+        
         .center-title {
-            font-size: 0.9em;
+            font-size: 0.8em;
         }
         
         .mut-birth, .mut-decadal, .mut-yearly {
-            font-size: 0.9em;
+            font-size: 0.8em;
         }
     }
 
@@ -458,28 +458,28 @@ CSS_STYLE = """
         .ziwei-grid {
             gap: 1px;
             border: 2px solid #000;
-            min-height: 400px;
+            min-height: 300px;
         }
         
         .palace-cell {
-            padding: 2px;
-            font-size: 0.55em;
+            padding: 1px;
+            font-size: 0.5em;
         }
         
         .center-cell {
-            padding: 8px;
+            padding: 5px;
         }
         
         .center-detail {
-            font-size: 0.65em;
+            font-size: 0.55em;
         }
         
         .star-major {
-            font-size: 0.9em;
+            font-size: 0.8em;
         }
         
         .star-minor {
-            font-size: 0.8em;
+            font-size: 0.7em;
         }
     }
 </style>"""
