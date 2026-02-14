@@ -464,19 +464,11 @@ def parse_ziwei_to_prompt(full_data):
 
 def get_llm_response(messages):
     api_key = os.getenv("DASHSCOPE_API_KEY")
-    if not api_key:
-        st.error("❌ API密钥未设置，请设置环境变量 'DASHSCOPE_API_KEY' 以使用AI功能")
-        st.info("💡 在Windows系统中，可以使用以下命令设置环境变量：")
-        st.code("setx DASHSCOPE_API_KEY \"your_api_key\"", language="bash")
-        return None
+    if not api_key: return None
     client = OpenAI(base_url="https://dashscope.aliyuncs.com/compatible-mode/v1", api_key=api_key)
     try:
         return client.chat.completions.create(model="qwen3-max", messages=messages, stream=True, temperature=0.7)
-    except Exception as e:
-        st.error(f"❌ AI调用失败: {e}")
-        if "InvalidApiKey" in str(e):
-            st.info("💡 提示：API密钥可能无效，请检查并重新设置 'DASHSCOPE_API_KEY'")
-        return None
+    except: return None
 
 # ==========================================
 # 3. 渲染逻辑
