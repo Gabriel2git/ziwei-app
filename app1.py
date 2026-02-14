@@ -573,14 +573,14 @@ def generate_master_prompt(user_question, full_data, target_year):
         yearly_mutagen = [yearly_muts.get('禄', ''), yearly_muts.get('权', ''), yearly_muts.get('科', ''), yearly_muts.get('忌', '')]
     
     chart_context = f"""
-    【命盘核心参数】
-    命主：{pan.get('soul', '未知')} | 身主：{pan.get('body', '未知')}
-    当前流年：{target_year}年 | 流年四化：{yearly_mutagen} (禄权科忌)
-    """
+【命盘核心参数】
+命主：{pan.get('soul', '未知')} | 身主：{pan.get('body', '未知')}
+当前流年：{target_year}年 | 流年四化：{yearly_mutagen} (禄权科忌)
+"""
     
     palace_text = ""
     for p in pan.get('palaces', []):
-        header = f"- {p.get('name', '未知')}宫 [{p.get('heavenlyStem', '')}{p.get('earthlyBranch', '')}]"
+        header = f"- {p.get('name', '未知')}宫[{p.get('heavenlyStem', '')}{p.get('earthlyBranch', '')}]"
         
         major_stars = []
         for s in p.get('majorStars', []):
@@ -606,38 +606,67 @@ def generate_master_prompt(user_question, full_data, target_year):
                 adj_stars.append(info)
         adj_str = "，".join(adj_stars) if adj_stars else "无"
         
+        shensha_text = ""
+        if p.get('suiqian12'):
+            shensha_text += f"│ │ ├岁前星 : {p['suiqian12']}\n"
+        if p.get('jiangqian12'):
+            shensha_text += f"│ │ ├将前星 : {p['jiangqian12']}\n"
+        if p.get('changsheng12'):
+            shensha_text += f"│ │ ├十二长生 : {p['changsheng12']}\n"
+        if p.get('boshi12'):
+            shensha_text += f"│ │ └太岁煞禄 : {p['boshi12']}\n"
+        
+        decadal_range = p.get('decadal', {}).get('range', [0, 0])
+        decadal_text = f"│ │ ├大限 : {decadal_range[0]}~{decadal_range[1]}虚岁\n"
+        
+        ages = p.get('ages', [])
+        minor_ages = ages[::2] if len(ages) > 5 else ages[:5]
+        minor_ages_str = "，".join(map(str, minor_ages))
+        minor_text = f"│ │ ├小限 : {minor_ages_str}虚岁\n"
+        
+        yearly_ages = ages[1::2] if len(ages) > 5 else ages[1:6]
+        yearly_ages_str = "，".join(map(str, yearly_ages))
+        yearly_text = f"│ │ └流年 : {yearly_ages_str}虚岁\n"
+        
         palace_text += f"{header}\n"
-        palace_text += f"  ├主星 : {major_str}\n"
-        palace_text += f"  ├辅星 : {minor_str}\n"
-        palace_text += f"  └小星 : {adj_str}\n\n"
+        palace_text += f"│ │ ├主星 : {major_str}\n"
+        palace_text += f"│ │ ├辅星 : {minor_str}\n"
+        palace_text += f"│ │ ├小星 : {adj_str}\n"
+        if shensha_text:
+            palace_text += f"│ │ ├神煞\n"
+            palace_text += shensha_text
+        palace_text += decadal_text
+        palace_text += minor_text
+        palace_text += yearly_text
+        palace_text += f"│ │\n"
     
-    full_chart_context = f"{chart_context}\n\n【命盘十二宫】\n{palace_text}"
+    full_chart_context = f"{chart_context}\n\n【命盘十二宫】\n│ │\n{palace_text}"
     
     system_prompt = f"""
-    # Role: 资深紫微斗数命理师
-    
-    # Core Philosophy (十六字真言)
-    1. **宫位定人事**：先看本宫，次看对宫，再看三合。
-    2. **星情断吉凶**：吉星（如禄存、魁钺）可解凶，煞星（如羊陀火铃）会破格。
-    3. **四化寻契机**：重点关注流年化忌冲入的宫位，那是今年最薄弱的环节。
-    4. **行运看变化**：本命盘决定上限，流年盘决定今年的吉凶应期。
+# Role: 资深紫微斗数命理师
 
-    # User Data
-    {full_chart_context}
+# Core Philosophy (十六字真言)
+1. **宫位定人事**：先看本宫，次看对宫，再看三合。
+2. **星情断吉凶**：吉星（如禄存、魁钺）可解凶，煞星（如羊陀火铃）会破格。
+3. **四化寻契机**：重点关注流年化忌冲入的宫位，那是今年最薄弱的环节。
+4. **行运看变化**：本命盘决定上限，流年盘决定今年的吉凶应期。
 
-    # Task
-    用户问题："{user_question}"
-    
-    # Response Guidelines
-    请严格遵循以下思考路径：
-    1. 定位核心宫位及三方四正
-    2. 分析星曜组合与格局
-    3. 寻找四化引动点（特别是化忌的冲照）
-    4. 结合大限与流年推断时间节点
-    
-    请用温暖、客观、建设性的语言输出建议。
-    遇到凶象（如化忌、空劫），不要只说不好，要给出"趋避建议"。
-    """
+# User Data
+{full_chart_context}
+
+# Task
+用户问题："{user_question}"
+
+# Response Guidelines
+请严格遵循以下思考路径：
+1. 定位核心宫位及三方四正
+2. 分析星曜组合与格局
+3. 寻找四化引动点（特别是化忌的冲照）
+4. 结合大限与流年推断时间节点
+
+请用温暖、客观、建设性的语言输出建议。
+遇到凶象（如化忌、空劫），不要只说不好，要给出"趋避建议"。
+"""
     
     return system_prompt
 
