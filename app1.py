@@ -368,6 +368,16 @@ CSS_STYLE = """
         font-size: 0.9em;
     }
     
+    .timeline-container > div[data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+    }
+    
+    .timeline-container > div[data-testid="stHorizontalBlock"] > div {
+        flex: 0 0 auto !important;
+        min-width: 60px !important;
+    }
+    
     div[data-testid="stHorizontalBlock"] button {
         padding: 0.2rem 0.2rem;
         font-size: 0.8em;
@@ -1084,7 +1094,6 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
             calculated_birth_year = current_target_year - current_nominal_age + 1
             
             st.markdown('<div class="timeline-label">1. 选择大限 (Decadal)</div>', unsafe_allow_html=True)
-            st.markdown('<div class="timeline-row">', unsafe_allow_html=True)
             cols = st.columns(len(decades)) if decades else st.columns(1)
             
             selected_decade_idx = 0
@@ -1110,10 +1119,8 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
                         if new_data:
                             st.session_state['ziwei_data'] = new_data
                             st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
 
             st.markdown('<div class="timeline-label" style="margin-top:10px;">2. 选择流年 (Yearly)</div>', unsafe_allow_html=True)
-            st.markdown('<div class="timeline-row">', unsafe_allow_html=True)
             if decades:
                 sel_start, sel_end = decades[selected_decade_idx]['range']
                 
@@ -1142,7 +1149,6 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
                             if new_data:
                                 st.session_state['ziwei_data'] = new_data
                                 st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
                         
             st.markdown('</div>', unsafe_allow_html=True)
         
