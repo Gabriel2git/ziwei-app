@@ -403,142 +403,83 @@ CSS_STYLE = """
         transform: translateY(-50%);
     }
 
-    /* 手机端响应式适配 - 参考文墨天机风格 */
+    /* 手机端响应式适配 */
     @media (max-width: 768px) {
         [data-testid="stSidebar"] { min-width: 300px !important; max-width: 400px !important; }
         
         .ziwei-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: auto auto auto auto auto auto auto auto;
-            gap: 2px;
-            min-height: auto;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            min-height: 500px;
             margin-top: 10px;
             margin-bottom: 10px;
         }
         
-        /* 中宫 - 顶部 */
         .center-cell {
-            grid-column: 1 / 3;
-            grid-row: 1 / 2;
-            padding: 15px;
-            min-height: 280px;
+            grid-column: 2 / 4;
+            grid-row: 2 / 4;
+            padding: 10px;
         }
         
-        /* 宫格通用样式 */
         .palace-cell {
-            padding: 6px;
-            font-size: 0.75em;
-            min-height: 180px;
+            padding: 3px;
+            font-size: 0.6em;
         }
         
-        /* 文墨天机风格布局 - 宫格顺序：巳午未申辰酉卯戌寅丑子亥 */
-        /* 第1行（顶部）：巳宫、午宫 */
-        .palace-cell:nth-child(2) { grid-column: 1; grid-row: 2; }
-        .palace-cell:nth-child(3) { grid-column: 2; grid-row: 2; }
-        
-        /* 第2行（顶部）：未宫、申宫 */
-        .palace-cell:nth-child(4) { grid-column: 1; grid-row: 3; }
-        .palace-cell:nth-child(5) { grid-column: 2; grid-row: 3; }
-        
-        /* 第3行（中部）：辰宫、酉宫（左右分列） */
-        .palace-cell:nth-child(6) { grid-column: 1; grid-row: 4; }
-        .palace-cell:nth-child(7) { grid-column: 2; grid-row: 4; }
-        
-        /* 第4行（中部）：卯宫、戌宫（左右分列） */
-        .palace-cell:nth-child(8) { grid-column: 1; grid-row: 5; }
-        .palace-cell:nth-child(9) { grid-column: 2; grid-row: 5; }
-        
-        /* 第5行（底部）：寅宫、丑宫 */
-        .palace-cell:nth-child(10) { grid-column: 1; grid-row: 6; }
-        .palace-cell:nth-child(11) { grid-column: 2; grid-row: 6; }
-        
-        /* 第6行（底部）：子宫、亥宫 */
-        .palace-cell:nth-child(12) { grid-column: 1; grid-row: 7; }
-        .palace-cell:nth-child(13) { grid-column: 2; grid-row: 7; }
-        
-        /* 优化宫格内容显示 */
         .star-major {
-            font-size: 1.2em;
-            line-height: 1.2;
+            font-size: 1.0em;
         }
         
         .star-minor {
-            font-size: 1.1em;
-            line-height: 1.1;
+            font-size: 0.9em;
         }
         
         .star-adj {
-            font-size: 1.0em;
-            line-height: 1.1;
+            font-size: 0.8em;
         }
         
         .center-detail {
-            font-size: 0.85em;
-            line-height: 1.5;
+            font-size: 0.7em;
         }
         
         .center-title {
-            font-size: 1.1em;
+            font-size: 0.9em;
         }
         
         .mut-birth, .mut-decadal, .mut-yearly {
-            font-size: 1.1em;
-            padding: 1px 3px;
-        }
-        
-        .palace-header {
-            font-size: 1.0em;
-            margin-bottom: 3px;
-        }
-        
-        .palace-footer {
-            font-size: 0.85em;
-            padding-top: 3px;
-            margin-top: 3px;
-        }
-        
-        .luck-indicator {
-            font-size: 0.75em;
-            padding: 2px 4px;
-            margin-bottom: 3px;
+            font-size: 0.9em;
         }
     }
 
     /* 超小屏幕适配 */
     @media (max-width: 480px) {
-        [data-testid="stSidebar"] { min-width: 260px !important; max-width: 320px !important; }
+        [data-testid="stSidebar"] { min-width: 250px !important; max-width: 300px !important; }
         
         .ziwei-grid {
             gap: 1px;
             border: 2px solid #000;
+            min-height: 400px;
         }
         
         .palace-cell {
-            padding: 4px;
-            font-size: 0.68em;
-            min-height: 160px;
+            padding: 2px;
+            font-size: 0.55em;
         }
         
         .center-cell {
-            padding: 12px;
-            min-height: 250px;
+            padding: 8px;
         }
         
         .center-detail {
-            font-size: 0.8em;
+            font-size: 0.65em;
         }
         
         .star-major {
-            font-size: 1.1em;
+            font-size: 0.9em;
         }
         
         .star-minor {
-            font-size: 1.0em;
-        }
-        
-        .palace-header {
-            font-size: 0.95em;
+            font-size: 0.8em;
         }
     }
 </style>"""
