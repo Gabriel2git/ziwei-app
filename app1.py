@@ -822,13 +822,17 @@ def generate_master_prompt(user_question, full_data, target_year):
     return system_prompt
 
 def get_llm_response(messages):
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = os.getenv("DASHSCOPE_API_KEY")
     if not api_key:
-        st.error("API密钥未设置，请设置环境变量 'OPENAI_API_KEY'")
+        st.error("API密钥未设置，请设置环境变量 'DASHSCOPE_API_KEY'")
         return None
-    client = OpenAI(base_url="https://dashscope.aliyuncs.com/compatible-mode/v1", api_key=api_key)
+    
+    model = st.session_state.get('selected_model', 'qwen3-max')
+    base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    
+    client = OpenAI(base_url=base_url, api_key=api_key)
     try:
-        return client.chat.completions.create(model="qwen3-max", messages=messages, stream=True, temperature=0.7)
+        return client.chat.completions.create(model=model, messages=messages, stream=True, temperature=0.7)
     except Exception as e:
         st.error(f"AI调用失败: {e}")
         return None
@@ -892,7 +896,10 @@ def render_html_grid(full_data):
         for s in p.get('minorStars', []):
             name = s.get('name', '')
             brightness = f'[{s.get("brightness", "")}]' if s.get('brightness') else ""
-            minor_stars.append(f'<span class="star-minor">{name}{brightness}</span>')
+            m_birth = f'<span class="mut-birth">[↑{s.get("mutagen", "")}]</span>' if s.get('mutagen') else ""
+            m_dec = f'<span class="mut-decadal">[限{decadal_map.get(name, "")}]</span>' if name in decadal_map else ""
+            m_year = f'<span class="mut-yearly">[流{yearly_map.get(name, "")}]</span>' if name in yearly_map else ""
+            minor_stars.append(f'<span class="star-minor">{name}{brightness}</span>{m_birth}{m_dec}{m_year}')
         
         if minor_stars:
             stars_html += '<div class="star-section">' + ''.join(minor_stars) + '</div>'
@@ -900,7 +907,10 @@ def render_html_grid(full_data):
         adj_stars = []
         for s in p.get('adjectiveStars', []):
             name = s.get('name', '')
-            adj_stars.append(f'<span class="star-adj">{name}</span>')
+            m_birth = f'<span class="mut-birth">[↑{s.get("mutagen", "")}]</span>' if s.get('mutagen') else ""
+            m_dec = f'<span class="mut-decadal">[限{decadal_map.get(name, "")}]</span>' if name in decadal_map else ""
+            m_year = f'<span class="mut-yearly">[流{yearly_map.get(name, "")}]</span>' if name in yearly_map else ""
+            adj_stars.append(f'<span class="star-adj">{name}</span>{m_birth}{m_dec}{m_year}')
         
         if adj_stars:
             stars_html += '<div class="star-section">' + ''.join(adj_stars[:8]) + '</div>'
@@ -974,6 +984,14 @@ def render_html_grid(full_data):
 
 with st.sidebar:
     st.title("🟣 命理工作台")
+    
+    st.markdown("### AI模型选择")
+    model_option = st.selectbox(
+        "选择AI模型",
+        ["qwen3-max", "deepseek-v3.2", "glm-4.7", "kimi-k2.5"],
+        index=0
+    )
+    st.session_state['selected_model'] = model_option
     
     cal_type = st.radio("历法", ["公历", "农历"], index=0, horizontal=True)
     
@@ -1103,31 +1121,30 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
             calculated_birth_year = current_target_year - current_nominal_age + 1
             
             st.markdown('<div class="timeline-label">1. 选择大限 (Decadal)</div>', unsafe_allow_html=True)
-            cols = st.columns(len(decades)) if decades else st.columns(1)
             
             selected_decade_idx = 0
             for i, dec in enumerate(decades):
                 start, end = dec['range']
-                label = f"{start}-{end}\n{dec['ganzhi']}"
+                ganzhi = dec['ganzhi']
+                label = f"{start}-{end}\n{ganzhi}"
                 is_active = (start <= current_nominal_age <= end)
                 if is_active: selected_decade_idx = i
                 
-                if i < len(cols):
-                    if cols[i].button(label, key=f"dec_{i}", type="primary" if is_active else "secondary", use_container_width=True):
-                        new_target_year = calculated_birth_year + start - 1
-                        st.session_state['target_year'] = new_target_year
-                        
-                        new_data = get_ziwei_data(
-                            st.session_state['birth_date_str'],
-                            st.session_state['birth_time'],
-                            st.session_state['gender'],
-                            new_target_year,
-                            is_lunar=st.session_state['is_lunar'],
-                            is_leap=st.session_state['is_leap']
-                        )
-                        if new_data:
-                            st.session_state['ziwei_data'] = new_data
-                            st.rerun()
+                if st.button(label, key=f"dec_{i}", type="primary" if is_active else "secondary", use_container_width=False):
+                    new_target_year = calculated_birth_year + start - 1
+                    st.session_state['target_year'] = new_target_year
+                    
+                    new_data = get_ziwei_data(
+                        st.session_state['birth_date_str'],
+                        st.session_state['birth_time'],
+                        st.session_state['gender'],
+                        new_target_year,
+                        is_lunar=st.session_state['is_lunar'],
+                        is_leap=st.session_state['is_leap']
+                    )
+                    if new_data:
+                        st.session_state['ziwei_data'] = new_data
+                        st.rerun()
 
             st.markdown('<div class="timeline-label" style="margin-top:10px;">2. 选择流年 (Yearly)</div>', unsafe_allow_html=True)
             if decades:
@@ -1138,31 +1155,43 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
                     y = calculated_birth_year + (age - 1)
                     years_in_decade.append({'year': y, 'age': age, 'ganzhi': get_ganzhi_for_year(y)})
                     
-                cols_y = st.columns(len(years_in_decade)) if years_in_decade else st.columns(1)
                 for i, item in enumerate(years_in_decade):
-                    if i < len(cols_y):
-                        label = f"{item['year']}\n{item['ganzhi']} ({item['age']}岁)"
-                        is_selected = (item['year'] == current_target_year)
+                    label = f"{item['year']}\n{item['ganzhi']} ({item['age']}岁)"
+                    is_selected = (item['year'] == current_target_year)
+                    
+                    if st.button(label, key=f"year_{item['year']}", type="primary" if is_selected else "secondary", use_container_width=False):
+                        st.session_state['target_year'] = item['year']
                         
-                        if cols_y[i].button(label, key=f"year_{item['year']}", type="primary" if is_selected else "secondary", use_container_width=True):
-                            st.session_state['target_year'] = item['year']
-                            
-                            new_data = get_ziwei_data(
-                                st.session_state['birth_date_str'],
-                                st.session_state['birth_time'],
-                                st.session_state['gender'],
-                                item['year'],
-                                is_lunar=st.session_state['is_lunar'],
-                                is_leap=st.session_state['is_leap']
-                            )
-                            if new_data:
-                                st.session_state['ziwei_data'] = new_data
-                                st.rerun()
+                        new_data = get_ziwei_data(
+                            st.session_state['birth_date_str'],
+                            st.session_state['birth_time'],
+                            st.session_state['gender'],
+                            item['year'],
+                            is_lunar=st.session_state['is_lunar'],
+                            is_leap=st.session_state['is_leap']
+                        )
+                        if new_data:
+                            st.session_state['ziwei_data'] = new_data
+                            st.rerun()
                         
             st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown("---")
         st.info("💡 想要咨询AI命理师？请在左侧边栏切换到 'AI 命理咨询师' 页面")
+        
+        if st.button("📋 打印AI Prompt", key="print_prompt"):
+            sys_prompt, data_context = parse_ziwei_to_prompt(data)
+            master_prompt = generate_master_prompt("测试问题", data, current_target_year)
+            
+            st.subheader("📝 喂给AI的Prompt")
+            st.markdown("### 系统提示词")
+            st.text(sys_prompt)
+            
+            st.markdown("### 数据上下文")
+            st.text(data_context)
+            
+            st.markdown("### 主提示词")
+            st.text(master_prompt)
 
     elif page == "AI 命理咨询师":
         st.subheader(f"🤖 AI 命理咨询师")
