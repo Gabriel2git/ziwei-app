@@ -578,6 +578,41 @@ def generate_master_prompt(user_question, full_data, target_year):
     当前流年：{target_year}年 | 流年四化：{yearly_mutagen} (禄权科忌)
     """
     
+    palace_text = ""
+    for p in pan.get('palaces', []):
+        header = f"- {p.get('name', '未知')}宫 [{p.get('heavenlyStem', '')}{p.get('earthlyBranch', '')}]"
+        
+        major_stars = []
+        for s in p.get('majorStars', []):
+            info = s.get('name', '')
+            if s.get('brightness'): info += f"[{s['brightness']}]"
+            if s.get('mutagen'): info += f"[↑{s['mutagen']}]"
+            major_stars.append(info)
+        major_str = "，".join(major_stars) if major_stars else "无"
+        
+        minor_stars = []
+        for s in p.get('minorStars', []):
+            info = s.get('name', '')
+            if s.get('brightness'): info += f"[{s['brightness']}]"
+            minor_stars.append(info)
+        minor_str = "，".join(minor_stars) if minor_stars else "无"
+        
+        adj_stars = []
+        important_adj = ['红鸾', '天喜', '天姚', '咸池', '天刑', '天虚', '天哭', '三台', '八座', '恩光', '天贵', '龙池', '凤阁', '孤辰', '寡宿', '破碎', '天德', '解神', '天使', '封诰', '天伤', '天空', '孤辰', '劫煞', '凤阁', '天福', '截空', '蜚廉', '年解', '旬空', '阴煞', '月德', '天官', '台辅', '天巫', '大耗', '龙德']
+        for s in p.get('adjectiveStars', []):
+            if s.get('name') in important_adj:
+                info = s.get('name', '')
+                if s.get('brightness'): info += f"[{s['brightness']}]"
+                adj_stars.append(info)
+        adj_str = "，".join(adj_stars) if adj_stars else "无"
+        
+        palace_text += f"{header}\n"
+        palace_text += f"  ├主星 : {major_str}\n"
+        palace_text += f"  ├辅星 : {minor_str}\n"
+        palace_text += f"  └小星 : {adj_str}\n\n"
+    
+    full_chart_context = f"{chart_context}\n\n【命盘十二宫】\n{palace_text}"
+    
     system_prompt = f"""
     # Role: 资深紫微斗数命理师
     
@@ -588,7 +623,7 @@ def generate_master_prompt(user_question, full_data, target_year):
     4. **行运看变化**：本命盘决定上限，流年盘决定今年的吉凶应期。
 
     # User Data
-    {chart_context}
+    {full_chart_context}
 
     # Task
     用户问题："{user_question}"
