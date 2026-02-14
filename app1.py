@@ -109,9 +109,9 @@ CSS_STYLE = """
         box-sizing: border-box;
         margin-top: 20px; 
         margin-bottom: 20px;
-        height: 300px !important;
-        max-height: 300px !important;
-        min-height: 300px !important;
+        height: 550px !important;
+        max-height: 550px !important;
+        min-height: 550px !important;
     }
 
     .palace-cell {
@@ -412,9 +412,9 @@ CSS_STYLE = """
         .ziwei-grid {
             grid-template-columns: repeat(4, 1fr);
             grid-template-rows: repeat(4, 1fr);
-            height: 250px !important;
-            max-height: 250px !important;
-            min-height: 250px !important;
+            height: 400px !important;
+            max-height: 400px !important;
+            min-height: 400px !important;
             margin-top: 10px;
             margin-bottom: 10px;
         }
@@ -443,15 +443,45 @@ CSS_STYLE = """
         }
         
         .center-detail {
-            font-size: 0.6em;
+            font-size: 0.55em !important;
         }
         
         .center-title {
-            font-size: 0.8em;
+            font-size: 0.7em !important;
+        }
+        
+        .bazi-tag {
+            font-size: 0.7em !important;
+            padding: 1px 4px !important;
+        }
+        
+        .center-info {
+            font-size: 0.7em !important;
+            line-height: 1.2 !important;
+            margin: 5px 0 !important;
+        }
+        
+        .mutagen-legend {
+            font-size: 0.6em !important;
+            margin-top: 5px !important;
         }
         
         .mut-birth, .mut-decadal, .mut-yearly {
             font-size: 0.8em;
+        }
+        
+        .timeline-container {
+            padding: 5px !important;
+        }
+        
+        .timeline-label {
+            font-size: 0.7em !important;
+            margin-bottom: 3px !important;
+        }
+        
+        div[data-testid="stHorizontalBlock"] button {
+            padding: 0.1rem 0.1rem !important;
+            font-size: 0.65em !important;
         }
     }
 
@@ -462,9 +492,9 @@ CSS_STYLE = """
         .ziwei-grid {
             gap: 1px;
             border: 2px solid #000;
-            height: 200px !important;
-            max-height: 200px !important;
-            min-height: 200px !important;
+            height: 350px !important;
+            max-height: 350px !important;
+            min-height: 350px !important;
         }
         
         .palace-cell {
@@ -477,7 +507,7 @@ CSS_STYLE = """
         }
         
         .center-detail {
-            font-size: 0.55em;
+            font-size: 0.5em !important;
         }
         
         .star-major {
@@ -486,6 +516,11 @@ CSS_STYLE = """
         
         .star-minor {
             font-size: 0.7em;
+        }
+        
+        div[data-testid="stHorizontalBlock"] button {
+            padding: 0.05rem 0.05rem !important;
+            font-size: 0.6em !important;
         }
     }
 </style>"""
