@@ -931,12 +931,12 @@ def render_html_grid(full_data):
     
     bazi = pan.get('chineseDate', '')
     center_html = f'''
-    <div class="center-cell">
-        <div class="center-title">紫微斗数命盘</div>
+    <div class="center-cell" style="font-size: 0.64em !important;">
+        <div class="center-title" style="font-size: 0.96em !important;">紫微斗数命盘</div>
         
-        <div class="bazi-tag">{bazi}</div>
+        <div class="bazi-tag" style="font-size: 0.8em !important;">{bazi}</div>
         
-        <div class="center-info">
+        <div class="center-info" style="font-size: 0.8em !important; line-height: 1.4 !important;">
             <div>真太阳时: {true_solar_time}</div>
             <div>钟表时间: {clock_time}</div>
             <div>农历: {pan.get('lunarDate', '')}{chinese_hour}</div>
@@ -949,7 +949,7 @@ def render_html_grid(full_data):
             <div class="sizheng-line"></div>
         </div>
         
-        <div class="mutagen-legend">
+        <div class="mutagen-legend" style="font-size: 0.7em !important;">
             <div>自化图示: →禄→权→科→忌</div>
             <div>运限指示: 当前大限高亮显示</div>
         </div>
