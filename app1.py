@@ -844,7 +844,7 @@ def generate_master_prompt(user_question, full_data, target_year):
 def get_llm_response(messages):
     api_key = os.getenv("DASHSCOPE_API_KEY")
     if not api_key:
-        st.error("API密钥未设置，请设置环境变量 'DASHSCOPE_API_KEY'")
+        st.warning("💡 提示：AI服务暂不可用，请先到'命盘显示'页面排盘，或刷新页面重试")
         return None
     
     model = st.session_state.get('selected_model', 'qwen3-max')
