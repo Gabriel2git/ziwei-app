@@ -109,7 +109,7 @@ CSS_STYLE = """
         box-sizing: border-box;
         margin-top: 20px; 
         margin-bottom: 20px;
-        min-height: 600px;
+        min-height: 500px;
     }
 
     .palace-cell {
