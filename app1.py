@@ -379,6 +379,17 @@ CSS_STYLE = """
         -webkit-overflow-scrolling: touch;
     }
     
+    .timeline-scroll-container div[data-testid="stVerticalBlock"] {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+    }
+    
+    .timeline-scroll-container label {
+        font-size: 0.8em !important;
+        white-space: nowrap !important;
+    }
+    
     .timeline-label {
         font-weight: bold;
         color: #5d4037;
@@ -1136,18 +1147,21 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
             for i, dec in enumerate(decades):
                 start, end = dec['range']
                 ganzhi = dec['ganzhi']
-                label = f"{start}-{end}岁 ({ganzhi})"
+                label = f"{start}-{end} {ganzhi}"
                 decade_options.append(label)
                 if start <= current_nominal_age <= end:
                     selected_decade_idx = i
             
-            selected_decade_label = st.selectbox(
-                "选择大限",
+            st.markdown('<div class="timeline-scroll-container">', unsafe_allow_html=True)
+            selected_decade_label = st.radio(
+                "",
                 decade_options,
                 index=selected_decade_idx,
-                key="decade_select",
+                key="decade_radio",
+                horizontal=True,
                 label_visibility="collapsed"
             )
+            st.markdown('</div>', unsafe_allow_html=True)
             
             selected_decade_index = decade_options.index(selected_decade_label)
             if selected_decade_index != selected_decade_idx:
@@ -1177,20 +1191,23 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
                     y = calculated_birth_year + (age - 1)
                     ganzhi = get_ganzhi_for_year(y)
                     years_in_decade.append({'year': y, 'age': age, 'ganzhi': ganzhi})
-                    year_options.append(f"{y}年 ({ganzhi}, {age}岁)")
+                    year_options.append(f"{y} {ganzhi}")
                 
                 current_year_index = 0
                 for i, item in enumerate(years_in_decade):
                     if item['year'] == current_target_year:
                         current_year_index = i
                 
-                selected_year_label = st.selectbox(
-                    "选择流年",
+                st.markdown('<div class="timeline-scroll-container">', unsafe_allow_html=True)
+                selected_year_label = st.radio(
+                    "",
                     year_options,
                     index=current_year_index,
-                    key="year_select",
+                    key="year_radio",
+                    horizontal=True,
                     label_visibility="collapsed"
                 )
+                st.markdown('</div>', unsafe_allow_html=True)
                 
                 selected_year_index = year_options.index(selected_year_label)
                 if selected_year_index != current_year_index:
