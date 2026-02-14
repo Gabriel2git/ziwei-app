@@ -607,9 +607,9 @@ def generate_master_prompt(user_question, full_data, target_year):
     return system_prompt
 
 def get_llm_response(messages):
-    api_key = os.getenv("DASHSCOPE_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        st.error("API密钥未设置，请设置环境变量 'DASHSCOPE_API_KEY'")
+        st.error("API密钥未设置，请设置环境变量 'OPENAI_API_KEY'")
         return None
     client = OpenAI(base_url="https://dashscope.aliyuncs.com/compatible-mode/v1", api_key=api_key)
     try:
