@@ -402,8 +402,103 @@ CSS_STYLE = """
         left: 5px;
         transform: translateY(-50%);
     }
-</style>
-"""
+
+    /* 手机端响应式适配 */
+    @media (max-width: 768px) {
+        [data-testid="stSidebar"] { min-width: 300px !important; max-width: 400px !important; }
+        
+        .ziwei-grid {
+            grid-template-columns: repeat(2, 1fr);
+            grid-template-rows: repeat(7, auto);
+            min-height: auto;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .center-cell {
+            grid-column: 1 / 3;
+            grid-row: 1 / 2;
+            padding: 15px;
+            min-height: 250px;
+        }
+        
+        .palace-cell {
+            padding: 5px;
+            font-size: 0.7em;
+            min-height: 150px;
+        }
+        
+        .star-major {
+            font-size: 1.1em;
+        }
+        
+        .star-minor {
+            font-size: 1.0em;
+        }
+        
+        .star-adj {
+            font-size: 0.9em;
+        }
+        
+        .center-detail {
+            font-size: 0.8em;
+        }
+        
+        .center-title {
+            font-size: 1.0em;
+        }
+        
+        .mut-birth, .mut-decadal, .mut-yearly {
+            font-size: 1.0em;
+        }
+        
+        .palace-cell:nth-child(2) { grid-column: 1; grid-row: 2; }
+        .palace-cell:nth-child(3) { grid-column: 2; grid-row: 2; }
+        .palace-cell:nth-child(4) { grid-column: 1; grid-row: 3; }
+        .palace-cell:nth-child(5) { grid-column: 2; grid-row: 3; }
+        .palace-cell:nth-child(7) { grid-column: 1; grid-row: 4; }
+        .palace-cell:nth-child(8) { grid-column: 2; grid-row: 4; }
+        .palace-cell:nth-child(10) { grid-column: 1; grid-row: 5; }
+        .palace-cell:nth-child(11) { grid-column: 2; grid-row: 5; }
+        .palace-cell:nth-child(13) { grid-column: 1; grid-row: 6; }
+        .palace-cell:nth-child(14) { grid-column: 2; grid-row: 6; }
+        .palace-cell:nth-child(16) { grid-column: 1; grid-row: 7; }
+        .palace-cell:nth-child(17) { grid-column: 2; grid-row: 7; }
+    }
+
+    /* 超小屏幕适配 */
+    @media (max-width: 480px) {
+        [data-testid="stSidebar"] { min-width: 250px !important; max-width: 300px !important; }
+        
+        .ziwei-grid {
+            gap: 1px;
+            border: 2px solid #000;
+        }
+        
+        .palace-cell {
+            padding: 3px;
+            font-size: 0.65em;
+            min-height: 130px;
+        }
+        
+        .center-cell {
+            padding: 10px;
+            min-height: 200px;
+        }
+        
+        .center-detail {
+            font-size: 0.75em;
+        }
+        
+        .star-major {
+            font-size: 1.0em;
+        }
+        
+        .star-minor {
+            font-size: 0.9em;
+        }
+    }
+</style>"""
 st.markdown(CSS_STYLE, unsafe_allow_html=True)
 
 SIHUA_TABLE = {
