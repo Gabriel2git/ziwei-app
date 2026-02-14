@@ -892,6 +892,7 @@ if btn:
     st.session_state['target_year'] = 2026
     
     st.session_state['messages'] = []
+    st.session_state['need_refresh_chat'] = True
     
     data = get_ziwei_data(
         date_str_input, chinese_hour_index, g, 2026,
@@ -907,6 +908,7 @@ if btn:
             {"role": "system", "content": data_context},
             {"role": "assistant", "content": "你好！我已经完整解析了这张命盘的本命结构。\n你可以问我：\n1. **格局性格**：例如「我适合创业还是上班？」\n2. **情感婚姻**：例如「我的正缘有什么特征？」\n3. **流年运势**：例如「今年要注意什么？」"}
         ]
+        st.session_state['need_refresh_chat'] = False
         
         st.rerun()
 
@@ -1016,6 +1018,10 @@ if 'birth_date_str' in st.session_state and 'ziwei_data' in st.session_state:
         
         if "messages" not in st.session_state:
             st.session_state.messages = []
+        
+        if "need_refresh_chat" in st.session_state and st.session_state["need_refresh_chat"]:
+            st.session_state.messages = []
+            st.session_state["need_refresh_chat"] = False
 
         for message in st.session_state.messages:
             if message["role"] != "system":
