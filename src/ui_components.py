@@ -1,7 +1,13 @@
 import streamlit as st
+import json
 from src.config import get_mutagens_by_stem
 
-def render_html_grid(full_data):
+@st.cache_data(ttl=3600)
+def render_html_grid_cached(full_data_json):
+    full_data = json.loads(full_data_json) if full_data_json else None
+    return _render_html_grid(full_data)
+
+def _render_html_grid(full_data):
     if not full_data or 'astrolabe' not in full_data:
         return """
         <div class="ziwei-grid">
@@ -145,3 +151,10 @@ def render_html_grid(full_data):
     row4 = make_cell('寅') + make_cell('丑') + make_cell('子') + make_cell('亥')
     
     return f'''<div class="ziwei-grid">{row1 + row2 + row3 + row4}</div>'''.replace("\n", "")
+
+def render_html_grid(full_data):
+    if not full_data:
+        return _render_html_grid(None)
+    import json
+    data_json = json.dumps(full_data, ensure_ascii=False, sort_keys=True)
+    return render_html_grid_cached(data_json)

@@ -4,6 +4,7 @@ import streamlit as st
 from openai import OpenAI
 from src.config import DASHSCOPE_BASE_URL, ZIWEI_API_URL_DEFAULT
 
+@st.cache_data(ttl=3600)  # 缓存 1 小时
 def get_ziwei_data(birthday, hour_index, gender, target_year, is_lunar=False, is_leap=False):
     api_url = os.getenv('ZIWEI_API_URL', ZIWEI_API_URL_DEFAULT)
     
