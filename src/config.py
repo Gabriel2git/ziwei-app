@@ -1,6 +1,6 @@
 CSS_STYLE = """
 <style>
-    [data-testid="stSidebar"] { min-width: 400px !important; max-width: 600px !important; }
+    [data-testid="stSidebar"] { min-width: 280px !important; max-width: 600px !important; }
     div[data-testid="stSidebarHeader"] { display: none !important; height: 0 !important; }
     [data-testid="collapsedControl"] { display: none !important; }
     [data-testid="stSidebarUserContent"] { padding-top: 2rem !important; }
@@ -373,7 +373,7 @@ CSS_STYLE = """
 
     /* 手机端响应式适配 */
     @media (max-width: 768px) {
-        [data-testid="stSidebar"] { min-width: 300px !important; max-width: 400px !important; }
+        [data-testid="stSidebar"] { min-width: 250px !important; max-width: 400px !important; }
         
         .ziwei-grid {
             grid-template-columns: repeat(4, 1fr);
@@ -453,7 +453,7 @@ CSS_STYLE = """
 
     /* 超小屏幕适配 */
     @media (max-width: 480px) {
-        [data-testid="stSidebar"] { min-width: 250px !important; max-width: 300px !important; }
+        [data-testid="stSidebar"] { min-width: 220px !important; max-width: 300px !important; }
         
         .ziwei-grid {
             gap: 1px;
