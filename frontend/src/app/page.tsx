@@ -117,6 +117,9 @@ export default function Home() {
       ];
 
       const stream = await getLLMResponse(dynamicMessages, selectedModel);
+      if (!stream) {
+        throw new Error('Failed to get response stream');
+      }
       const reader = stream.getReader();
       const decoder = new TextDecoder();
       let aiResponseContent = '';
