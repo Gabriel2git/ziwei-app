@@ -110,11 +110,11 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
     const decadalText = `大限 : ${decadalRange[0]}~${decadalRange[1]}虚岁\n`;
     
     const ages = p?.ages || [];
-    const minorAges = ages.length > 5 ? ages.filter((_, i) => i % 2 === 0) : ages.slice(0, 5);
+    const minorAges = ages.length > 5 ? ages.filter((_: number, i: number) => i % 2 === 0) : ages.slice(0, 5);
     const minorAgesStr = minorAges.map(String).join('，');
     const minorText = `小限 : ${minorAgesStr}虚岁\n`;
     
-    const yearlyAges = ages.length > 5 ? ages.filter((_, i) => i % 2 === 1) : ages.slice(1, 6);
+    const yearlyAges = ages.length > 5 ? ages.filter((_: number, i: number) => i % 2 === 1) : ages.slice(1, 6);
     const yearlyAgesStr = yearlyAges.map(String).join('，');
     const yearlyText = `流年 : ${yearlyAgesStr}虚岁\n`;
     
