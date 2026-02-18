@@ -1,7 +1,7 @@
 import axios from 'axios';
 import type { ZiweiData, BirthFormData } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_ZIWEI_API_URL || 'http://localhost:3000/api/ziwei';
+const API_BASE_URL = process.env.NEXT_PUBLIC_ZIWEI_API_URL || 'http://localhost:3001/api/ziwei';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

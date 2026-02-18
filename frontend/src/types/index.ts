@@ -44,6 +44,10 @@ export interface Horoscope {
 export interface ZiweiData {
   astrolabe: Astrolabe;
   horoscope?: Horoscope;
+  originalTime?: {
+    hour: number;
+    minute: number;
+  };
 }
 
 export interface BirthFormData {

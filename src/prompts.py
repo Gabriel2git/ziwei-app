@@ -38,10 +38,9 @@ def parse_ziwei_to_prompt(full_data):
         
         adj_stars = []
         for s in p.get('adjectiveStars', []):
-            if s.get('name') in IMPORTANT_ADJ_STARS:
-                info = s.get('name', '')
-                if s.get('brightness'): info += f"[{s['brightness']}]"
-                adj_stars.append(info)
+            info = s.get('name', '')
+            if s.get('brightness'): info += f"[{s['brightness']}]"
+            adj_stars.append(info)
         adj_str = "，".join(adj_stars) if adj_stars else "无"
         
         shensha_text = ""
@@ -136,10 +135,9 @@ def generate_master_prompt(user_question, full_data, target_year):
         
         adj_stars = []
         for s in p.get('adjectiveStars', []):
-            if s.get('name') in IMPORTANT_ADJ_STARS:
-                info = s.get('name', '')
-                if s.get('brightness'): info += f"[{s['brightness']}]"
-                adj_stars.append(info)
+            info = s.get('name', '')
+            if s.get('brightness'): info += f"[{s['brightness']}]"
+            adj_stars.append(info)
         adj_str = "，".join(adj_stars) if adj_stars else "无"
         
         shensha_text = ""

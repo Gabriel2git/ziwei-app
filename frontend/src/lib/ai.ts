@@ -58,10 +58,17 @@ function getDefaultSystemPrompt() {
 `;
 }
 
+
+
 function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
   const pan = fullData.astrolabe;
   
-  const clockTime = `${pan?.solarDate || ''} ${pan?.timeRange?.split('~')[0] || ''}`;
+  // 使用用户输入的原始时间，而不是 iztro 库返回的 timeRange
+  const originalHour = fullData.originalTime?.hour || 0;
+  const originalMinute = fullData.originalTime?.minute || 0;
+  const formattedHour = originalHour.toString().padStart(2, '0');
+  const formattedMinute = originalMinute.toString().padStart(2, '0');
+  const clockTime = `${pan?.solarDate || ''} ${formattedHour}:${formattedMinute}`;
   const trueSolarTime = clockTime;
   const chineseHour = pan?.time || '';
   
@@ -71,6 +78,8 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
   baseInfo += `真太阳时：${trueSolarTime}\n`;
   baseInfo += `农历时间：${pan?.lunarDate || '未知'}${chineseHour}\n`;
   baseInfo += `节气四柱：${pan?.chineseDate || '未知'}\n`;
+  baseInfo += `非节气四柱：${pan?.chineseDate || '未知'}\n`;
+  baseInfo += `五行局数：${pan?.fiveElementsClass || '未知'}\n`;
   baseInfo += `身主:${pan?.body || '未知'}; 命主:${pan?.soul || '未知'}; 子年斗君:寅; 身宫:${pan?.earthlyBranchOfBodyPalace || '未知'}\n`;
   
   let palaceText = "";
@@ -98,33 +107,45 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
     
     const adjStars: string[] = [];
     for (const s of p?.adjectiveStars || []) {
-      if (IMPORTANT_ADJ_STARS.includes(s?.name || '')) {
-        let info = s?.name || '';
-        if (s?.brightness) info += `[${s.brightness}]`;
-        adjStars.push(info);
-      }
+      let info = s?.name || '';
+      if (s?.brightness) info += `[${s.brightness}]`;
+      adjStars.push(info);
     }
     const adjStr = adjStars.length > 0 ? adjStars.join('，') : '无';
     
-    const decadalRange = p?.decadal?.range || [0, 0];
-    const decadalText = `大限 : ${decadalRange[0]}~${decadalRange[1]}虚岁\n`;
+    // 神煞信息
+    const changsheng12 = p?.changsheng12 || '';
+    const jiangqian12 = p?.jiangqian12 || '';
+    const suiqian12 = p?.suiqian12 || '';
+    const boshi12 = p?.boshi12 || '';
+    
+    const stage = p?.stage || p?.decadal;
+    const stageRange = stage?.range || [0, 0];
+    const stageText = `大限 : ${stageRange[0]}~${stageRange[1]}虚岁`;
     
     const ages = p?.ages || [];
-    const minorAges = ages.length > 5 ? ages.filter((_: number, i: number) => i % 2 === 0) : ages.slice(0, 5);
+    // 小限显示前5个年龄（顺序与文墨天机一致）
+    const minorAges = ages.slice(0, 5);
     const minorAgesStr = minorAges.map(String).join('，');
-    const minorText = `小限 : ${minorAgesStr}虚岁\n`;
+    const minorText = `小限 : ${minorAgesStr}虚岁`;
     
-    const yearlyAges = ages.length > 5 ? ages.filter((_: number, i: number) => i % 2 === 1) : ages.slice(1, 6);
+    // 流年显示第2-6个年龄（顺序与文墨天机一致）
+    const yearlyAges = ages.slice(1, 6);
     const yearlyAgesStr = yearlyAges.map(String).join('，');
-    const yearlyText = `流年 : ${yearlyAgesStr}虚岁\n`;
+    const yearlyText = `流年 : ${yearlyAgesStr}虚岁`;
     
     palaceText += `${header}\n`;
     palaceText += `  ├主星 : ${majorStr}\n`;
     palaceText += `  ├辅星 : ${minorStr}\n`;
     palaceText += `  ├小星 : ${adjStr}\n`;
-    palaceText += `  ├${decadalText.trim()}\n`;
-    palaceText += `  ├${minorText.trim()}\n`;
-    palaceText += `  └${yearlyText.trim()}\n\n`;
+    palaceText += `  ├神煞\n`;
+    palaceText += `  │ ├岁前星 : ${suiqian12 || '无'}\n`;
+    palaceText += `  │ ├将前星 : ${jiangqian12 || '无'}\n`;
+    palaceText += `  │ ├十二长生 : ${changsheng12 || '无'}\n`;
+    palaceText += `  │ └太岁煞禄 : ${boshi12 || '无'}\n`;
+    palaceText += `  ├${stageText}\n`;
+    palaceText += `  ├${minorText}\n`;
+    palaceText += `  └${yearlyText}\n\n`;
   }
 
   const systemPrompt = `
@@ -144,7 +165,7 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
 **注意：** 辅星（如文曲化忌）与杂曜（如红鸾）对格局影响大，请务必纳入分析。
 `;
 
-  const dataContext = `【基本信息】\n${baseInfo}\n\n【命盘十二宫】\n${palaceText}`;
+  const dataContext = `紫微斗数命盘\n│\n【基本信息】\n${baseInfo}\n\n【命盘十二宫】\n${palaceText}`;
   
   return [systemPrompt, dataContext];
 }
@@ -153,12 +174,31 @@ function generateMasterPrompt(userQuestion: string, fullData: ZiweiData, targetY
   const pan = fullData.astrolabe;
   const yun = fullData.horoscope || {};
   
+  // 使用用户输入的原始时间
+  const originalHour = fullData.originalTime?.hour || 0;
+  const originalMinute = fullData.originalTime?.minute || 0;
+  const formattedHour = originalHour.toString().padStart(2, '0');
+  const formattedMinute = originalMinute.toString().padStart(2, '0');
+  const clockTime = `${pan?.solarDate || ''} ${formattedHour}:${formattedMinute}`;
+  const chineseHour = pan?.time || '';
+  
   const yearlyMutagen: string[] = [];
   if (yun?.yearly?.heavenlyStem) {
     const yearlyStem = yun.yearly.heavenlyStem;
     const yearlyMuts = getMutagensByStem(yearlyStem);
     yearlyMutagen.push(yearlyMuts['禄'] || '', yearlyMuts['权'] || '', yearlyMuts['科'] || '', yearlyMuts['忌'] || '');
   }
+  
+  const baseInfo = `【基本信息】
+性别：${pan?.gender || '未知'}
+地理经度：120.033
+钟表时间：${clockTime}
+真太阳时：${clockTime}
+农历时间：${pan?.lunarDate || '未知'}${chineseHour}
+节气四柱：${pan?.chineseDate || '未知'}
+非节气四柱：${pan?.chineseDate || '未知'}
+五行局数：${pan?.fiveElementsClass || '未知'}
+身主:${pan?.body || '未知'}; 命主:${pan?.soul || '未知'}; 子年斗君:寅; 身宫:${pan?.earthlyBranchOfBodyPalace || '未知'}`;
   
   const chartContext = `
 【命盘核心参数】
@@ -191,26 +231,24 @@ function generateMasterPrompt(userQuestion: string, fullData: ZiweiData, targetY
     
     const adjStars: string[] = [];
     for (const s of p?.adjectiveStars || []) {
-      if (IMPORTANT_ADJ_STARS.includes(s?.name || '')) {
-        let info = s?.name || '';
-        if (s?.brightness) info += `[${s.brightness}]`;
-        adjStars.push(info);
-      }
+      let info = s?.name || '';
+      if (s?.brightness) info += `[${s.brightness}]`;
+      adjStars.push(info);
     }
     const adjStr = adjStars.length > 0 ? adjStars.join('，') : '无';
     
-    const decadalRange = p?.decadal?.range || [0, 0];
-    const decadalText = `│ │ ├大限 : ${decadalRange[0]}~${decadalRange[1]}虚岁\n`;
+    const stage = p?.stage || p?.decadal;
+    const stageRange = stage?.range || [0, 0];
+    const stageText = `大限 : ${stageRange[0]}~${stageRange[1]}虚岁`;
     
     palaceText += `${header}\n`;
-    palaceText += `│ │ ├主星 : ${majorStr}\n`;
-    palaceText += `│ │ ├辅星 : ${minorStr}\n`;
-    palaceText += `│ │ ├小星 : ${adjStr}\n`;
-    palaceText += decadalText;
-    palaceText += `│ │\n`;
+    palaceText += `  ├主星 : ${majorStr}\n`;
+    palaceText += `  ├辅星 : ${minorStr}\n`;
+    palaceText += `  ├小星 : ${adjStr}\n`;
+    palaceText += `  └${stageText}\n\n`;
   }
   
-  const fullChartContext = `${chartContext}\n\n【命盘十二宫】\n│ │\n${palaceText}`;
+  const fullChartContext = `${baseInfo}\n\n${chartContext}\n\n【命盘十二宫】\n${palaceText}`;
   
   const systemPrompt = `
 # Role: 资深的国学易经术数领域专家
@@ -238,6 +276,11 @@ ${fullChartContext}
 
 请用温暖、客观、建设性的语言输出建议。
 遇到凶象（如化忌、空劫），不要只说不好，要给出"趋避建议"。
+
+# 重要提示
+请基于提供的命盘数据进行分析，不要基于任何其他命盘数据。
+命盘的出生时间是：${clockTime}，对应的农历时间是：${pan?.lunarDate || '未知'}${chineseHour}。
+请确保你的分析基于这个具体的命盘数据，而不是其他命盘数据。
 `;
   
   return systemPrompt;
