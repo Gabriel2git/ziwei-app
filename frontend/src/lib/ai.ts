@@ -11,6 +11,10 @@ export interface ChatState {
 export interface ZiweiData {
   astrolabe: any;
   horoscope?: any;
+  originalTime?: {
+    hour: number;
+    minute: number;
+  };
 }
 
 const AI_MODELS = [
