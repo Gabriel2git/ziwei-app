@@ -122,7 +122,7 @@ export default function Home() {
       console.error('❌ 从后端 API 获取数据失败:', error);
       
       // 如果 API 请求失败，使用模拟数据作为备选
-      const mockZiweiData = {
+      const mockZiweiData: any = {
         astrolabe: {
           gender: data.gender === 'male' ? '男' : '女',
           solarDate: data.birthday,
