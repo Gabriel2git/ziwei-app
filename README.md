@@ -1,20 +1,23 @@
 # AI 紫微斗数 Pro
 
-一个基于 Streamlit 和 Node.js 的智能紫微斗数命理分析应用，集成 AI 命理师功能。
+一个基于 React + Next.js 和 Node.js 的智能紫微斗数命理分析应用，集成 AI 命理师功能。
 
 ## ✨ 功能特点
 
-- 📊 **紫微斗数排盘** - 完整的命盘计算与展示
-- 🤖 **AI 命理师** - 集成多个 AI 模型（qwen3-max, deepseek-v3.2, glm-4.7, kimi-k2.5）
+- 📊 **紫微斗数排盘** - 完整的命盘计算与展示，包括主星、辅星、小星等信息
+- 🤖 **AI 命理师** - 基于 AI 模型的智能命理分析
 - 📱 **响应式设计** - 完美适配电脑端和手机端
-- 💾 **对话历史** - 支持保存和加载聊天记录
-- 🎨 **美观界面** - 4x4 命盘布局，中宫居中，参考文墨天机设计
+- ⏰ **真太阳时校验** - 基于经度的真太阳时计算
+- 🎨 **美观界面** - 参考文墨天机设计，信息密度高
+- 🔄 **四化计算** - 完整的四化（禄、权、科、忌）计算
+- 📅 **大运流年** - 包含大限和流年信息
 
 ## 🛠️ 技术栈
 
 ### 前端
-- **Streamlit** - Python Web 应用框架
-- **OpenAI API** - 阿里云百炼兼容接口
+- **React** - 前端 UI 库
+- **Next.js** - React 框架
+- **TypeScript** - 类型安全
 
 ### 后端
 - **Node.js** - 紫微斗数计算服务
@@ -22,41 +25,32 @@
 - **iztro** - 紫微斗数计算库
 
 ### 部署
-- **Streamlit Cloud** - 前端应用部署
-- **Render** - Node.js API 部署
+- **Vercel** - 前端和后端部署
 
 ## 📁 项目结构
 
 ```
 ziwei_project/
-├── app.py                    # Streamlit 主应用入口
-├── app_old.py                # 旧版本备份
-├── requirements.txt          # Python 依赖
-├── package.json              # Node.js 依赖
-├── render.yaml              # Render 部署配置
-├── DEPLOYMENT.md            # 部署指南
-├── .streamlit/              # Streamlit 配置
-│   ├── config.toml
-│   └── secrets.toml.example
-├── src/                     # 源代码模块
-│   ├── __init__.py
-│   ├── config.py           # 配置与常量（CSS、四化表等）
-│   ├── calculations.py     # 真太阳时、时辰计算
-│   ├── api_client.py       # API 客户端（Node.js API、OpenAI）
-│   ├── prompts.py          # AI 提示词生成
-│   ├── ui_components.py    # UI 组件（命盘渲染）
-│   ├── server.js           # Node.js API 服务
-│   └── solar_time_calculator.py
-├── data/
-│   └── ziwei_data.json
-└── tests/                   # 测试文件（已删除）
+├── frontend/                 # React + Next.js 前端
+│   ├── src/
+│   │   ├── app/              # Next.js 应用路由
+│   │   ├── components/       # UI 组件
+│   │   ├── lib/              # 工具函数和 AI 集成
+│   │   └── types/            # TypeScript 类型定义
+│   ├── package.json          # 前端依赖
+│   └── next.config.js        # Next.js 配置
+├── src/                      # Node.js 后端
+│   ├── server.js             # API 服务入口
+│   └── prompts.py            # AI 提示词生成
+├── package.json              # 后端依赖
+├── README.md                 # 项目说明
+└── .gitignore                # Git 忽略文件
 ```
 
 ## 🚀 快速开始
 
 ### 前置要求
 
-- Python 3.8+
 - Node.js 16+
 - npm 或 yarn
 
@@ -69,103 +63,86 @@ git clone https://github.com/Gabriel2git/ziwei-app.git
 cd ziwei-app
 ```
 
-#### 2. 安装 Python 依赖
+#### 2. 安装依赖
 
 ```bash
-pip install -r requirements.txt
-```
+# 安装后端依赖
+npm install
 
-#### 3. 安装 Node.js 依赖
-
-```bash
+# 安装前端依赖
+cd frontend
 npm install
 ```
 
-#### 4. 启动 Node.js API 服务
+#### 3. 启动服务
 
 ```bash
+# 启动后端 API 服务（在项目根目录）
 node src/server.js
+
+# 启动前端开发服务器（在 frontend 目录）
+npm run dev
 ```
 
-API 服务将在 http://localhost:3000 启动
-
-#### 5. 启动 Streamlit 应用
-
-```bash
-streamlit run app.py
-```
-
-应用将在 http://localhost:8501 打开
-
-### 环境变量配置
-
-在 Streamlit Cloud 或本地 `.streamlit/secrets.toml` 中配置：
-
-```toml
-ZIWEI_API_URL = "https://your-api-url.com/api/ziwei"
-DASHSCOPE_API_KEY = "your-dashscope-api-key"
-```
+前端应用将在 http://localhost:3000 打开
+后端 API 服务将在 http://localhost:3001 运行
 
 ## 📱 使用说明
 
 ### 1. 输入出生信息
 - 选择历法（公历/农历）
-- 输入出生日期
-- 选择出生时间
+- 输入出生日期和时间
 - 选择性别
+- 选择出生地（用于真太阳时计算）
 
 ### 2. 开始排盘
-点击「🚀 开始排盘」按钮生成命盘
+点击「开始排盘」按钮生成命盘
 
 ### 3. 查看命盘
-- 4x4 网格布局显示十二宫
-- 中宫显示基本信息（真太阳时、钟表时间、农历等）
-- 支持选择大限和流年
+- 十二宫布局显示
+- 包含主星、辅星、小星信息
+- 显示大限和流年信息
+- 真太阳时校验结果
 
 ### 4. AI 命理咨询
-- 切换到「AI 命理咨询师」页面
-- 输入问题，AI 将基于命盘进行分析
-- 支持保存和加载对话历史
+- 基于完整命盘信息的 AI 分析
+- 支持详细的命理问题解答
 
-## 🎛️ 代码重构说明
+## 🎛️ 核心功能说明
 
-本项目采用**关注点分离**原则进行重构：
+### 紫微斗数计算
+- 使用 iztro 库进行专业的紫微斗数计算
+- 支持阳历和阴历出生日期
+- 基于经度的真太阳时计算
+- 完整的十二宫信息，包括主星、辅星、小星
 
-### 模块职责
+### AI 命理分析
+- 基于命盘信息生成详细的 AI 提示词
+- 包含四化计算和大运流年信息
+- 专业的紫微斗数分析逻辑
 
-| 模块 | 职责 |
-|------|------|
-| `src/config.py` | CSS 样式、常量、四化表、天干地支 |
-| `src/calculations.py` | 真太阳时计算、时辰转换 |
-| `src/api_client.py` | Node.js API 调用、OpenAI API 调用 |
-| `src/prompts.py` | 命盘数据解析、AI 提示词生成 |
-| `src/ui_components.py` | 命盘 HTML 渲染、UI 组件 |
-| `app.py` | 主入口、页面流程控制 |
+### 界面设计
+- 参考文墨天机的设计风格
+- 响应式布局，适配各种设备
+- 清晰的命盘信息展示
 
 ## 🌐 云端部署
 
-详细部署指南请参考 [DEPLOYMENT.md](./DEPLOYMENT.md)
-
-### 部署架构
-
-```
-Streamlit Cloud (app.py)
-    ↓ HTTP 请求
-Render Node.js API (src/server.js)
-```
-
-### 快速部署链接
-
-- **Streamlit Cloud**: https://share.streamlit.io
-- **Render**: https://render.com
+项目已部署到 Vercel 平台：
+- 生产环境：https://ziwei-app-gz.vercel.app/
 
 ## 📝 更新日志
 
-### v2.0.0 (2026-02-16)
-- ✅ 代码重构：采用关注点分离原则
-- ✅ 拆分多个模块：config, calculations, api_client, prompts, ui_components
-- ✅ 调整左侧栏最小宽度，方便拖动
-- ✅ 删除不需要的测试文件
+### v3.0.0 (2026-02-18)
+- ✅ 前端迁移：从 Streamlit 改为 React + Next.js
+- ✅ 部署迁移：从 Streamlit Cloud + Render 改为 Vercel
+- ✅ 功能增强：添加真太阳时校验、完整的星曜信息
+- ✅ AI 提示词优化：包含详细的命盘信息和四化计算
+- ✅ 代码重构：采用现代化的前端架构
+
+### v2.0.0
+- 代码重构：采用关注点分离原则
+- 模块拆分：config, calculations, api_client, prompts, ui_components
 
 ### v1.0.0
 - 初始版本发布
@@ -184,8 +161,9 @@ ISC License
 ## 🙏 致谢
 
 - [iztro](https://github.com/sylarlong/iztro) - 紫微斗数计算库
-- [Streamlit](https://streamlit.io) - Python Web 框架
-- [阿里云百炼](https://bailian.console.aliyun.com) - AI 模型服务
+- [React](https://react.dev/) - 前端 UI 库
+- [Next.js](https://nextjs.org/) - React 框架
+- [Vercel](https://vercel.com/) - 部署平台
 
 ---
 
