@@ -105,6 +105,9 @@ const server = http.createServer(async (req, res) => {
         astrolabe = iztro.astro.bySolar(birthday, trueHourIndex, gender, true, 'zh-CN');
       }
       
+      // 计算运势（包含大限和流年信息）
+      const horoscope = iztro.astro.getHoroscope(astrolabe, targetYear || new Date().getFullYear());
+      
       // 将真太阳时信息添加到返回数据中
       astrolabe.trueSolarTime = trueSolarTime;
       astrolabe.originalHourIndex = hourIndex;
@@ -115,8 +118,10 @@ const server = http.createServer(async (req, res) => {
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({
         astrolabe: astrolabe,
+        horoscope: horoscope,
         targetYear: targetYear
       }));
+
     } catch (error) {
       console.error('Error:', error);
       res.statusCode = 500;

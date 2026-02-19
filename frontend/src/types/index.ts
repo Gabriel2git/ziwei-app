@@ -48,6 +48,7 @@ export interface ZiweiData {
     hour: number;
     minute: number;
   };
+  targetYear?: number;
 }
 
 export interface BirthFormData {

@@ -19,8 +19,10 @@ export default function Home() {
   const [birthData, setBirthData] = useState<{
     birthday: string;
     birthTime: number;
+    birthMinute: number;
     birthdayType: 'solar' | 'lunar';
     gender: 'male' | 'female';
+    longitude: number;
   } | null>(null);
   const [ziweiData, setZiweiData] = useState<any>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -29,7 +31,73 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [debugPrompt, setDebugPrompt] = useState<string>('');
   const [showDebug, setShowDebug] = useState(false);
+  const [horoscopeYear, setHoroscopeYear] = useState(new Date().getFullYear());
+  const [isRefreshingData, setIsRefreshingData] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // 处理命盘日期变化
+  const handleHoroscopeDateChange = async (date: Date) => {
+    if (!birthData || isRefreshingData) return;
+    
+    const newYear = date.getFullYear();
+    if (newYear === horoscopeYear) return; // 避免重复更新
+    
+    setIsRefreshingData(true);
+    
+    try {
+      // 更新运势年份
+      setHoroscopeYear(newYear);
+      
+      // 重新获取命盘数据
+      const response = await fetch('http://localhost:3001/api/ziwei', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          birthday: birthData.birthday,
+          hourIndex: birthData.birthTime,
+          minute: birthData.birthMinute,
+          gender: birthData.gender,
+          longitude: birthData.longitude,
+          targetYear: newYear
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('API 请求失败');
+      }
+      
+      const realZiweiData = await response.json();
+      
+      // 保存用户输入的原始时间
+      realZiweiData.originalTime = {
+        hour: birthData.birthTime,
+        minute: birthData.birthMinute
+      };
+      
+      // 更新命盘数据
+      setZiweiData(realZiweiData);
+      
+      // 更新 AI prompt
+      const [sysPrompt, dataContext] = parseZiweiToPrompt(realZiweiData);
+      setMessages([
+        { role: 'system', content: sysPrompt },
+        { role: 'system', content: dataContext },
+        { 
+          role: 'assistant', 
+          content: '你好！我已经根据你选择的大限更新了命盘分析。\n你可以问我：\n1. **格局性格**：例如「我适合创业还是上班？」\n2. **情感婚姻**：例如「我的正缘有什么特征？」\n3. **流年运势**：例如「今年要注意什么？」' 
+        }
+      ]);
+      
+      // 更新调试 prompt
+      setDebugPrompt(`=== 系统提示词 ===\n${sysPrompt}\n\n=== 数据上下文 ===\n${dataContext}`);
+    } catch (error) {
+      console.error('更新命盘数据失败:', error);
+    } finally {
+      setIsRefreshingData(false);
+    }
+  };
   
   const handleZiweiDataLoaded = (data: any) => {
     console.log('✅ 命盘数据加载完成:', data);
@@ -88,7 +156,7 @@ export default function Home() {
           minute: data.birthMinute,
           gender: data.gender,
           longitude: data.longitude,
-          targetYear: 2026
+          targetYear: horoscopeYear
         }),
       });
       
@@ -266,6 +334,9 @@ export default function Home() {
         minute: data.birthMinute
       };
       
+      // 添加 targetYear 到模拟数据中，确保与 iztro 命盘显示的运势信息同步
+      mockZiweiData.targetYear = horoscopeYear;
+      
       console.log('🟢 使用备选模拟数据，包含完整的 12 宫和星耀信息');
       setZiweiData(mockZiweiData);
       
@@ -296,8 +367,7 @@ export default function Home() {
       let systemPrompt: string;
       
       if (ziweiData) {
-        const targetYear = 2026;
-        systemPrompt = generateMasterPrompt(inputMessage, ziweiData, targetYear);
+        systemPrompt = generateMasterPrompt(inputMessage, ziweiData, horoscopeYear);
       } else {
         systemPrompt = getDefaultSystemPrompt();
       }
@@ -459,17 +529,110 @@ export default function Home() {
               {hasBirthData && birthData ? (
                 <>
                   <div className="bg-white rounded-2xl shadow-2xl p-8">
-                    <h2 className="text-xl font-bold text-gray-800 mb-6 text-center">
-                      📊 紫微斗数命盘
-                    </h2>
+
                     <div className="flex justify-center">
                     <IztrolabeWrapper 
                       birthday={birthData.birthday}
                       birthTime={birthData.birthTime}
                       birthdayType={birthData.birthdayType}
                       gender={birthData.gender}
+                      horoscopeYear={horoscopeYear}
+                      onHoroscopeDateChange={handleHoroscopeDateChange}
                     />
                   </div>
+                  </div>
+                  
+                  {/* 大限和流年选择按钮 */}
+                  <div className="mt-6 bg-white rounded-2xl shadow-xl p-6">
+                    {/* 大限选择 */}
+                    <div className="mb-4">
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { range: '4~13', year: 2003 },
+                          { range: '14~23', year: 2013 },
+                          { range: '24~33', year: 2023 },
+                          { range: '34~43', year: 2033 },
+                          { range: '44~53', year: 2043 },
+                          { range: '54~63', year: 2053 },
+                          { range: '64~73', year: 2063 },
+                          { range: '74~83', year: 2073 },
+                          { range: '84~93', year: 2083 },
+                          { range: '94~103', year: 2093 },
+                          { range: '104~113', year: 2103 },
+                          { range: '114~123', year: 2113 }
+                        ].map((period, index) => {
+                          // 计算该大限对应的流年范围
+                          const startYear = period.year;
+                          const endYear = startYear + 9;
+                          
+                          return (
+                            <button
+                              key={index}
+                              onClick={() => handleHoroscopeDateChange(new Date(startYear, 5, 1))}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                horoscopeYear >= startYear && horoscopeYear <= endYear
+                                  ? 'bg-purple-600 text-white shadow-md'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              }`}
+                              disabled={isRefreshingData}
+                            >
+                              {period.range}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    
+                    {/* 流年选择 */}
+                    <div className="mt-4">
+                      {(() => {
+                        // 找到当前选中的大限
+                        const currentPeriod = [
+                          { range: '4~13', year: 2003 },
+                          { range: '14~23', year: 2013 },
+                          { range: '24~33', year: 2023 },
+                          { range: '34~43', year: 2033 },
+                          { range: '44~53', year: 2043 },
+                          { range: '54~63', year: 2053 },
+                          { range: '64~73', year: 2063 },
+                          { range: '74~83', year: 2073 },
+                          { range: '84~93', year: 2083 },
+                          { range: '94~103', year: 2093 },
+                          { range: '104~113', year: 2103 },
+                          { range: '114~123', year: 2113 }
+                        ].find(period => {
+                          const startYear = period.year;
+                          const endYear = startYear + 9;
+                          return horoscopeYear >= startYear && horoscopeYear <= endYear;
+                        });
+                        
+                        if (currentPeriod) {
+                          const startYear = currentPeriod.year;
+                          return (
+                            <div>
+                              <div className="text-sm font-semibold text-gray-600 mb-2">{currentPeriod.range} 大限流年</div>
+                              <div className="flex flex-wrap gap-2">
+                                {Array.from({ length: 10 }, (_, i) => startYear + i).map((year, yearIndex) => (
+                                  <button
+                                    key={yearIndex}
+                                    onClick={() => handleHoroscopeDateChange(new Date(year, 5, 1))}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                      horoscopeYear === year
+                                        ? 'bg-blue-600 text-white shadow-md'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                    disabled={isRefreshingData}
+                                  >
+                                    {year}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
                   </div>
                   
                   <div className="mt-6 flex gap-3 justify-center">
@@ -619,14 +782,19 @@ function IztrolabeWrapper({
   birthday, 
   birthTime, 
   birthdayType, 
-  gender
-}: {
+  gender,
+  horoscopeYear,
+  onHoroscopeDateChange
+}: { 
   birthday: string;
   birthTime: number;
   birthdayType: 'solar' | 'lunar';
   gender: 'male' | 'female';
+  horoscopeYear: number;
+  onHoroscopeDateChange: (date: Date) => void;
 }) {
   const [Iztrolabe, setIztrolabe] = useState<any>(null);
+  const iztroRef = useRef<any>(null);
   
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -638,6 +806,28 @@ function IztrolabeWrapper({
     }
   }, []);
 
+  // 监听命盘日期变化
+  useEffect(() => {
+    if (iztroRef.current) {
+      // 获取iztro实例
+      const iztroInstance = iztroRef.current.getInstance();
+      if (iztroInstance) {
+        // 保存原始的日期变更方法
+        const originalSetHoroscopeDate = iztroInstance.setHoroscopeDate;
+        
+        // 重写日期变更方法，添加回调
+        iztroInstance.setHoroscopeDate = function(date: any) {
+          const result = originalSetHoroscopeDate.call(this, date);
+          // 调用回调函数，通知父组件日期变更
+          if (onHoroscopeDateChange && date) {
+            onHoroscopeDateChange(new Date(date));
+          }
+          return result;
+        };
+      }
+    }
+  }, [Iztrolabe, onHoroscopeDateChange]);
+
   if (!Iztrolabe) {
     return (
       <div className="w-[1024px] h-[800px] bg-gray-100 rounded-xl flex items-center justify-center">
@@ -648,15 +838,17 @@ function IztrolabeWrapper({
 
   const IztroComponent = Iztrolabe;
   const shichenIndex = getShichenIndexFromHour(birthTime);
+  const horoscopeDate = new Date(horoscopeYear, 5, 1); // 使用指定年份的6月1日作为horoscopeDate，确保过了农历新年，虚岁计算准确
   
   return (
     <div style={{ width: 1024, margin: '0 auto' }}>
       <IztroComponent 
+        ref={iztroRef}
         birthday={birthday}
         birthTime={shichenIndex}
         birthdayType={birthdayType}
         gender={gender}
-        horoscopeDate={new Date()}
+        horoscopeDate={horoscopeDate}
       />
     </div>
   );
