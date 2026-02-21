@@ -857,9 +857,10 @@ function IztrolabeWrapper({
             border: 2px solid #000 !important;
           }
           
-          /* 深色模式下使用白色边框 */
+          /* 深色模式下使用白色边框和浅灰色背景 */
           .dark .iztro-palace {
             border: 2px solid #fff !important;
+            background-color: #333333 !important;
           }
           
           /* 确保边框样式覆盖默认样式 */
@@ -869,6 +870,12 @@ function IztrolabeWrapper({
           
           .dark .iztro-palace-inner {
             border: none !important;
+            background-color: transparent !important;
+          }
+          
+          /* 深色模式下调整文字颜色，确保清晰可读 */
+          .dark .iztro-palace-inner {
+            color: #ffffff !important;
           }
         `}</style>
       </div>
