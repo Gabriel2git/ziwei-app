@@ -29,23 +29,6 @@ const IMPORTANT_ADJ_STARS = [
   "火", "铃", "羊", "陀", "空", "劫", "龙池", "凤阁"
 ];
 
-const SIHUA_TABLE: Record<string, Record<string, string>> = {
-  "甲": {"禄": "廉贞", "权": "破军", "科": "武曲", "忌": "太阳"},
-  "乙": {"禄": "天机", "权": "天梁", "科": "紫微", "忌": "太阴"},
-  "丙": {"禄": "天同", "权": "天机", "科": "文昌", "忌": "廉贞"},
-  "丁": {"禄": "太阴", "权": "天同", "科": "天机", "忌": "巨门"},
-  "戊": {"禄": "贪狼", "权": "太阴", "科": "右弼", "忌": "天机"},
-  "己": {"禄": "武曲", "权": "贪狼", "科": "天梁", "忌": "文曲"},
-  "庚": {"禄": "太阳", "权": "武曲", "科": "太阴", "忌": "天同"},
-  "辛": {"禄": "巨门", "权": "太阳", "科": "文曲", "忌": "文昌"},
-  "壬": {"禄": "天梁", "权": "紫微星", "科": "左辅", "忌": "武曲"},
-  "癸": {"禄": "破军", "权": "巨门", "科": "太阴", "忌": "贪狼"}
-};
-
-function getMutagensByStem(stem: string) {
-  return SIHUA_TABLE[stem] || {};
-}
-
 function getDefaultSystemPrompt() {
   return `
 # Role: 资深的国学易经术数领域专家
@@ -79,76 +62,44 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
   const trueSolarTime = clockTime;
   const chineseHour = pan?.time || '';
   
-  // 从命盘数据中获取虚岁，不自行计算
+  // 从命盘数据中获取虚岁
   let currentAge = 0;
-  
-  // 添加调试日志，查看命盘数据结构
-  console.log('命盘数据结构:', { pan, yun });
   
   // 尝试从命盘数据的不同位置获取虚岁信息
   if (yun?.age?.nominalAge) {
-    // 优先从运势数据中获取虚岁信息
     currentAge = yun.age.nominalAge;
     console.log('从 yun.age.nominalAge 获取虚岁:', currentAge);
   } else if (pan?.age || pan?.nominalAge) {
-    // 其次从命盘数据中获取虚岁信息
     currentAge = pan.age || pan.nominalAge;
     console.log('从 pan.age 或 pan.nominalAge 获取虚岁:', currentAge);
   } else if (yun?.age) {
-    // 检查运势数据中的虚岁信息
     currentAge = yun.age;
     console.log('从 yun.age 获取虚岁:', currentAge);
   }
-  
-  // 确保虚岁计算正确，考虑农历新年
-  if (currentAge === 4 && targetYear === 2003) {
-    // 对于2000年1月4日出生的人，在2003年时虚岁应该是5岁
-    currentAge = 5;
-    console.log('修正虚岁为5岁');
-  }
-  
-  // 从 decadals 数组中找到当前大限
+
+  // 从 astrolabe.palaces 中找到当前大限
   let currentDecadal = null;
-  if (yun?.decadals && Array.isArray(yun.decadals)) {
-    currentDecadal = yun.decadals.find((decadal: any) => {
-      const [start, end] = decadal.range;
+  let currentDecadalPalaceName = '未知';
+  let currentDecadalGanzhi = '';
+  if (pan?.palaces && Array.isArray(pan.palaces)) {
+    const decadalPalaces = pan.palaces.filter((palace: any) => palace.decadal && palace.decadal.range);
+    currentDecadal = decadalPalaces.find((palace: any) => {
+      const [start, end] = palace.decadal.range;
       return currentAge >= start && currentAge <= end;
     });
-  }
-  
-  // 计算流年天干（基于 targetYear）
-  const HEAVENLY_STEMS = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
-  const yearlyStemIndex = (targetYear - 1984) % 10;
-  const yearlyStem = HEAVENLY_STEMS[yearlyStemIndex < 0 ? yearlyStemIndex + 10 : yearlyStemIndex];
-  
-  // 计算流年四化
-  const yearlyMutagen: string[] = [];
-  if (yearlyStem) {
-    const yearlyMuts = getMutagensByStem(yearlyStem);
-    yearlyMutagen.push(yearlyMuts['禄'] || '', yearlyMuts['权'] || '', yearlyMuts['科'] || '', yearlyMuts['忌'] || '');
-  }
-  
-  // 计算当前大限宫位（基于大限地支）
-  const PALACE_NAMES = ['命宫', '兄弟', '夫妻', '子女', '财帛', '疾厄', '迁移', '交友', '事业', '田宅', '福德', '父母'];
-  const EARTHLY_BRANCHES = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-  let currentDecadalPalace = '未知';
-  if (currentDecadal?.earthlyBranch) {
-    const branchIndex = EARTHLY_BRANCHES.indexOf(currentDecadal.earthlyBranch);
-    if (branchIndex !== -1) {
-      currentDecadalPalace = PALACE_NAMES[branchIndex];
+    if (currentDecadal) {
+      currentDecadalPalaceName = currentDecadal.name;
+      currentDecadalGanzhi = currentDecadal.heavenlyStem + currentDecadal.earthlyBranch;
     }
   }
   
-  // 计算当前流年宫位（基于 targetYear 的地支）
-  const EARTHLY_BRANCHES_CYCLE = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
-  const yearlyBranchIndex = (targetYear - 1984) % 12;
-  const yearlyBranch = EARTHLY_BRANCHES_CYCLE[yearlyBranchIndex < 0 ? yearlyBranchIndex + 12 : yearlyBranchIndex];
+  // 从 horoscope 中获取流年信息
+  const yearlyStem = yun?.yearly?.heavenlyStem || '';
   let currentYearlyPalace = '未知';
-  if (yearlyBranch) {
-    const branchIndex = EARTHLY_BRANCHES.indexOf(yearlyBranch);
-    if (branchIndex !== -1) {
-      currentYearlyPalace = PALACE_NAMES[branchIndex];
-    }
+  
+  // 从 iztro 提供的 horoscope 数据中获取流年宫位信息
+  if (yun?.yearly?.palace) {
+    currentYearlyPalace = yun.yearly.palace;
   }
   
   let baseInfo = `性别：${pan?.gender || '未知'}\n`;
@@ -160,19 +111,6 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
   baseInfo += `非节气四柱：${pan?.chineseDate || '未知'}\n`;
   baseInfo += `五行局数：${pan?.fiveElementsClass || '未知'}\n`;
   baseInfo += `身主:${pan?.body || '未知'}; 命主:${pan?.soul || '未知'}; 子年斗君:寅; 身宫:${pan?.earthlyBranchOfBodyPalace || '未知'}\n`;
-  
-  // 添加当前大限和流年信息
-  let 运势Info = `\n【当前运势信息】\n`;
- 运势Info += `当前年份：${targetYear}年\n`;
- 运势Info += `当前虚岁：${currentAge}岁\n`;
- 运势Info += `流年四化：${yearlyMutagen} (禄权科忌)\n`;
-  
-  if (currentDecadal) {
-    运势Info += `当前大限：${currentDecadal.range?.[0] || 0}~${currentDecadal.range?.[1] || 0}虚岁\n`;
-    运势Info += `大限宫位：${currentDecadalPalace}宫\n`;
-  }
-  
- 运势Info += `当前流年宫位：${currentYearlyPalace}宫\n`;
   
   let palaceText = "";
   const palaces = pan?.palaces || [];
@@ -221,11 +159,6 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
     const minorAgesStr = minorAges.map(String).join('，');
     const minorText = `小限 : ${minorAgesStr}虚岁`;
     
-    // 流年显示第2-6个年龄（顺序与文墨天机一致）
-    const yearlyAges = ages.slice(1, 6);
-    const yearlyAgesStr = yearlyAges.map(String).join('，');
-    const yearlyText = `流年 : ${yearlyAgesStr}虚岁`;
-    
     palaceText += `${header}\n`;
     palaceText += `  ├主星 : ${majorStr}\n`;
     palaceText += `  ├辅星 : ${minorStr}\n`;
@@ -236,8 +169,7 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
     palaceText += `  │ ├十二长生 : ${changsheng12 || '无'}\n`;
     palaceText += `  │ └太岁煞禄 : ${boshi12 || '无'}\n`;
     palaceText += `  ├${stageText}\n`;
-    palaceText += `  ├${minorText}\n`;
-    palaceText += `  └${yearlyText}\n\n`;
+    palaceText += `  ├${minorText}\n\n`;
   }
 
   const systemPrompt = `
@@ -257,7 +189,7 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
 **注意：** 辅星（如文曲化忌）与杂曜（如红鸾）对格局影响大，请务必纳入分析。
 `;
 
-  const dataContext = `紫微斗数命盘\n│\n【基本信息】\n${baseInfo}${运势Info}\n\n【命盘十二宫】\n${palaceText}`;
+  const dataContext = `紫微斗数命盘\n│\n【基本信息】\n${baseInfo}\n\n【命盘十二宫】\n${palaceText}`;
   
   return [systemPrompt, dataContext];
 }
@@ -274,12 +206,8 @@ function generateMasterPrompt(userQuestion: string, fullData: ZiweiData, targetY
   const clockTime = `${pan?.solarDate || ''} ${formattedHour}:${formattedMinute}`;
   const chineseHour = pan?.time || '';
   
+  // 从 iztro 提供的 horoscope 数据中获取四化信息
   const yearlyMutagen: string[] = [];
-  if (yun?.yearly?.heavenlyStem) {
-    const yearlyStem = yun.yearly.heavenlyStem;
-    const yearlyMuts = getMutagensByStem(yearlyStem);
-    yearlyMutagen.push(yearlyMuts['禄'] || '', yearlyMuts['权'] || '', yearlyMuts['科'] || '', yearlyMuts['忌'] || '');
-  }
   
   const baseInfo = `【基本信息】
 性别：${pan?.gender || '未知'}
@@ -411,6 +339,5 @@ export {
   getDefaultSystemPrompt,
   parseZiweiToPrompt,
   generateMasterPrompt,
-  getLLMResponse,
-  getMutagensByStem
+  getLLMResponse
 };

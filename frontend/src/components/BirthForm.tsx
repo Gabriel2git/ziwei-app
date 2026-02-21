@@ -82,115 +82,115 @@ export default function BirthForm({ onDataLoaded }: BirthFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-gray-900">📅 选择历法</label>
+        <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100">📅 选择历法</label>
         <div className="flex gap-2">
-          <label className="flex items-center cursor-pointer bg-gray-50 px-3 py-2 rounded-lg border-2 border-transparent hover:border-purple-300 transition-all text-sm">
+          <label className="flex items-center cursor-pointer bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-lg border-2 border-transparent hover:border-purple-300 dark:hover:border-purple-700 transition-all text-sm">
             <input
               type="radio"
               checked={!isLunar}
               onChange={() => setIsLunar(false)}
               className="mr-2 text-purple-600"
             />
-            <span className="text-gray-900">阳历</span>
+            <span className="text-gray-900 dark:text-gray-100">阳历</span>
           </label>
-          <label className="flex items-center cursor-pointer bg-gray-50 px-3 py-2 rounded-lg border-2 border-transparent hover:border-purple-300 transition-all text-sm">
+          <label className="flex items-center cursor-pointer bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-lg border-2 border-transparent hover:border-purple-300 dark:hover:border-purple-700 transition-all text-sm">
             <input
               type="radio"
               checked={isLunar}
               onChange={() => setIsLunar(true)}
               className="mr-2 text-purple-600"
             />
-            <span className="text-gray-900">农历</span>
+            <span className="text-gray-900 dark:text-gray-100">农历</span>
           </label>
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-gray-900">🎂 出生日期</label>
+        <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100">🎂 出生日期</label>
         <div className="flex gap-1">
           <select
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
-            className="flex-1 p-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 text-sm"
+            className="flex-1 p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 text-sm"
           >
             {years.map((y) => (
-              <option key={y} value={y} className="text-gray-900">{y}年</option>
+              <option key={y} value={y} className="text-gray-900 dark:text-gray-100">{y}年</option>
             ))}
           </select>
           <select
             value={month}
             onChange={(e) => setMonth(Number(e.target.value))}
-            className="flex-1 p-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 text-sm"
+            className="flex-1 p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 text-sm"
           >
             {months.map((m) => (
-              <option key={m} value={m} className="text-gray-900">{m}月</option>
+              <option key={m} value={m} className="text-gray-900 dark:text-gray-100">{m}月</option>
             ))}
           </select>
           <select
             value={day}
             onChange={(e) => setDay(Number(e.target.value))}
-            className="flex-1 p-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 text-sm"
+            className="flex-1 p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 text-sm"
           >
             {days.map((d) => (
-              <option key={d} value={d} className="text-gray-900">{d}日</option>
+              <option key={d} value={d} className="text-gray-900 dark:text-gray-100">{d}日</option>
             ))}
           </select>
         </div>
       </div>
 
       {isLunar && (
-        <div className="flex items-center bg-amber-50 p-2 rounded-lg">
+        <div className="flex items-center bg-amber-50 dark:bg-amber-900/20 p-2 rounded-lg">
           <input
             type="checkbox"
             checked={isLeap}
             onChange={(e) => setIsLeap(e.target.checked)}
             className="mr-2 w-4 h-4 text-purple-600"
           />
-          <label className="text-xs text-amber-900 font-medium">是闰月? (例如闰四月)</label>
+          <label className="text-xs text-amber-900 dark:text-amber-400 font-medium">是闰月? (例如闰四月)</label>
         </div>
       )}
 
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-gray-900">⏰ 出生时间</label>
+        <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100">⏰ 出生时间</label>
         <div className="flex items-center gap-1">
           <select
             value={hour}
             onChange={(e) => setHour(Number(e.target.value))}
-            className="flex-1 p-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 text-sm"
+            className="flex-1 p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 text-sm"
           >
             {hours.map((h) => (
-              <option key={h} value={h} className="text-gray-900">{h.toString().padStart(2, '0')}时</option>
+              <option key={h} value={h} className="text-gray-900 dark:text-gray-100">{h.toString().padStart(2, '0')}时</option>
             ))}
           </select>
-          <span className="text-xl text-gray-400 font-light">:</span>
+          <span className="text-xl text-gray-400 dark:text-gray-500 font-light">:</span>
           <select
             value={minute}
             onChange={(e) => setMinute(Number(e.target.value))}
-            className="flex-1 p-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 text-sm"
+            className="flex-1 p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 text-sm"
           >
             {minutes.map((m) => (
-              <option key={m} value={m} className="text-gray-900">{m.toString().padStart(2, '0')}分</option>
+              <option key={m} value={m} className="text-gray-900 dark:text-gray-100">{m.toString().padStart(2, '0')}分</option>
             ))}
           </select>
         </div>
         
-        <div className="bg-purple-50 p-2 rounded-lg border border-purple-200">
+        <div className="bg-purple-50 dark:bg-purple-900/30 p-2 rounded-lg border border-purple-200 dark:border-purple-800/50">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-purple-800">对应时辰</span>
-            <span className="text-sm font-bold text-purple-700">{shichen}</span>
+            <span className="text-xs font-semibold text-purple-800 dark:text-purple-400">对应时辰</span>
+            <span className="text-sm font-bold text-purple-700 dark:text-purple-400">{shichen}</span>
           </div>
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-gray-900">📍 出生地</label>
+        <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100">📍 出生地</label>
         <select
           value={selectedCity}
           onChange={(e) => setSelectedCity(e.target.value)}
-          className="w-full p-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 text-sm"
+          className="w-full p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 text-sm"
         >
           {cities.map((city) => (
-            <option key={city.value} value={city.value} className="text-gray-900">
+            <option key={city.value} value={city.value} className="text-gray-900 dark:text-gray-100">
               {city.label}
             </option>
           ))}
@@ -202,22 +202,22 @@ export default function BirthForm({ onDataLoaded }: BirthFormProps) {
             value={customLongitude}
             onChange={(e) => setCustomLongitude(e.target.value)}
             placeholder="请输入经度值（例如：116.41）"
-            className="w-full p-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 text-sm"
+            className="w-full p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:border-purple-500 focus:outline-none transition-all text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800 text-sm"
           />
         )}
         
-        <div className="bg-blue-50 p-2 rounded-lg border border-blue-200">
+        <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg border border-blue-200 dark:border-blue-800/50">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-blue-800">当前经度</span>
-            <span className="text-sm font-bold text-blue-700">{getLongitude().toFixed(2)}</span>
+            <span className="text-xs font-semibold text-blue-800 dark:text-blue-400">当前经度</span>
+            <span className="text-sm font-bold text-blue-700 dark:text-blue-400">{getLongitude().toFixed(2)}</span>
           </div>
         </div>
       </div>
 
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-gray-900">👤 性别</label>
+        <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100">👤 性别</label>
         <div className="flex gap-2">
-          <label className="flex items-center cursor-pointer bg-gray-50 px-3 py-2 rounded-lg border-2 border-transparent hover:border-pink-300 transition-all flex-1 justify-center text-sm">
+          <label className="flex items-center cursor-pointer bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-lg border-2 border-transparent hover:border-pink-300 dark:hover:border-pink-700 transition-all flex-1 justify-center text-sm">
             <input
               type="radio"
               value="female"
@@ -225,9 +225,9 @@ export default function BirthForm({ onDataLoaded }: BirthFormProps) {
               onChange={() => setGender('female')}
               className="mr-2 text-pink-600"
             />
-            <span className="text-gray-900">👩 女</span>
+            <span className="text-gray-900 dark:text-gray-100">👩 女</span>
           </label>
-          <label className="flex items-center cursor-pointer bg-gray-50 px-3 py-2 rounded-lg border-2 border-transparent hover:border-blue-300 transition-all flex-1 justify-center text-sm">
+          <label className="flex items-center cursor-pointer bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-lg border-2 border-transparent hover:border-blue-300 dark:hover:border-blue-700 transition-all flex-1 justify-center text-sm">
             <input
               type="radio"
               value="male"
@@ -235,7 +235,7 @@ export default function BirthForm({ onDataLoaded }: BirthFormProps) {
               onChange={() => setGender('male')}
               className="mr-2 text-blue-600"
             />
-            <span className="text-gray-900">👨 男</span>
+            <span className="text-gray-900 dark:text-gray-100">👨 男</span>
           </label>
         </div>
       </div>
@@ -255,8 +255,8 @@ export default function BirthForm({ onDataLoaded }: BirthFormProps) {
         )}
       </button>
 
-      <div className="pt-3 border-t border-gray-100">
-        <p className="text-xs text-gray-700 text-center">
+      <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
+        <p className="text-xs text-gray-700 dark:text-gray-400 text-center">
           💡 使用 react-iztro 专业组件，精准计算紫微斗数命盘
         </p>
       </div>

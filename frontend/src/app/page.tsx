@@ -12,6 +12,7 @@ import {
   getLLMResponse
 } from '@/lib/ai';
 
+
 export default function Home() {
   const [currentPage, setCurrentPage] = useState<'命盘显示' | 'AI 命理师'>('命盘显示');
   const [selectedModel, setSelectedModel] = useState(AI_MODELS[0]);
@@ -33,7 +34,23 @@ export default function Home() {
   const [showDebug, setShowDebug] = useState(false);
   const [horoscopeYear, setHoroscopeYear] = useState(new Date().getFullYear());
   const [isRefreshingData, setIsRefreshingData] = useState(false);
+  const [nominalAge, setNominalAge] = useState<number | null>(null);
+  const [darkMode, setDarkMode] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // 切换深色模式
+  const toggleDarkMode = () => {
+    const htmlElement = document.documentElement;
+    const isDark = htmlElement.classList.contains('dark');
+    
+    if (isDark) {
+      htmlElement.classList.remove('dark');
+      setDarkMode(false);
+    } else {
+      htmlElement.classList.add('dark');
+      setDarkMode(true);
+    }
+  };
 
   // 处理命盘日期变化
   const handleHoroscopeDateChange = async (date: Date) => {
@@ -48,6 +65,9 @@ export default function Home() {
       // 更新运势年份
       setHoroscopeYear(newYear);
       
+      // 将小时数转换为时辰索引
+      const shichenIndex = getShichenIndexFromHour(birthData.birthTime);
+      
       // 重新获取命盘数据
       const response = await fetch('http://localhost:3001/api/ziwei', {
         method: 'POST',
@@ -56,7 +76,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           birthday: birthData.birthday,
-          hourIndex: birthData.birthTime,
+          hourIndex: shichenIndex,
           minute: birthData.birthMinute,
           gender: birthData.gender,
           longitude: birthData.longitude,
@@ -78,6 +98,28 @@ export default function Home() {
       
       // 更新命盘数据
       setZiweiData(realZiweiData);
+      
+      // 计算虚岁并更新状态
+      if (birthData) {
+        const birthDateParts = birthData.birthday.split('-');
+        const birthYear = parseInt(birthDateParts[0]);
+        const birthMonth = parseInt(birthDateParts[1]);
+        const birthDay = parseInt(birthDateParts[2]);
+        
+        // 使用 chinese-lunar-calendar 库计算虚岁
+        try {
+          const birthSolar = Solar.fromYmdHms(birthYear, birthMonth, birthDay, 0, 0, 0);
+          const targetSolar = Solar.fromYmdHms(newYear, 1, 1, 0, 0, 0);
+          
+          // 计算虚岁
+          const calculatedAge = newYear - birthYear + 1;
+          
+          setNominalAge(calculatedAge);
+          console.log('计算的虚岁:', calculatedAge);
+        } catch (error) {
+          console.error('虚岁计算错误:', error);
+        }
+      }
       
       // 更新 AI prompt
       const [sysPrompt, dataContext] = parseZiweiToPrompt(realZiweiData);
@@ -144,6 +186,10 @@ export default function Home() {
     console.log('🟢 handleDataLoaded 被调用:', data);
     
     try {
+      // 将小时数转换为时辰索引
+      const shichenIndex = getShichenIndexFromHour(data.birthTime);
+      console.log('🟢 转换后的时辰索引:', shichenIndex);
+      
       // 从后端 API 获取真实数据
       const response = await fetch('http://localhost:3001/api/ziwei', {
         method: 'POST',
@@ -152,7 +198,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           birthday: data.birthday,
-          hourIndex: data.birthTime,
+          hourIndex: shichenIndex,
           minute: data.birthMinute,
           gender: data.gender,
           longitude: data.longitude,
@@ -168,11 +214,9 @@ export default function Home() {
       console.log('🟢 从后端 API 获取真实数据成功:', realZiweiData);
       
       // 保存用户输入的原始时间
-      const originalHour = data.birthTime;
-      const originalMinute = data.birthMinute;
       realZiweiData.originalTime = {
-        hour: originalHour,
-        minute: originalMinute
+        hour: data.birthTime,
+        minute: data.birthMinute
       };
       
       setZiweiData(realZiweiData);
@@ -189,164 +233,11 @@ export default function Home() {
     } catch (error) {
       console.error('❌ 从后端 API 获取数据失败:', error);
       
-      // 如果 API 请求失败，使用模拟数据作为备选
-      const mockZiweiData: any = {
-        astrolabe: {
-          gender: data.gender === 'male' ? '男' : '女',
-          solarDate: data.birthday,
-          lunarDate: data.birthday,
-          chineseDate: '庚子年 庚辰月 辛酉日 癸巳时',
-          soul: '贪狼',
-          body: '文昌',
-          earthlyBranchOfBodyPalace: '午',
-          palaces: [
-            {
-              name: '命宫',
-              heavenlyStem: '戊',
-              earthlyBranch: '午',
-              majorStars: [{ name: '紫微', brightness: '庙' }, { name: '天府', brightness: '庙' }],
-              minorStars: [{ name: '文昌', brightness: '旺' }],
-              adjectiveStars: [{ name: '凤阁', brightness: '庙' }, { name: '天福', brightness: '庙' }],
-              stage: { range: [6, 15] },
-              ages: [6, 18, 30, 42, 54]
-            },
-            {
-              name: '兄弟',
-              heavenlyStem: '己',
-              earthlyBranch: '未',
-              majorStars: [{ name: '天机', brightness: '平' }],
-              minorStars: [],
-              adjectiveStars: [{ name: '天喜', brightness: '庙' }],
-              stage: { range: [16, 25] },
-              ages: [8, 20, 32, 44, 56]
-            },
-            {
-              name: '夫妻',
-              heavenlyStem: '庚',
-              earthlyBranch: '申',
-              majorStars: [{ name: '太阳', brightness: '庙' }],
-              minorStars: [],
-              adjectiveStars: [{ name: '红鸾', brightness: '庙' }],
-              stage: { range: [26, 35] },
-              ages: [10, 22, 34, 46, 58]
-            },
-            {
-              name: '子女',
-              heavenlyStem: '辛',
-              earthlyBranch: '酉',
-              majorStars: [{ name: '武曲', brightness: '得' }],
-              minorStars: [],
-              adjectiveStars: [{ name: '咸池', brightness: '庙' }],
-              stage: { range: [36, 45] },
-              ages: [12, 24, 36, 48, 60]
-            },
-            {
-              name: '财帛',
-              heavenlyStem: '壬',
-              earthlyBranch: '戌',
-              majorStars: [{ name: '天同', brightness: '庙' }],
-              minorStars: [],
-              adjectiveStars: [{ name: '天厨', brightness: '庙' }],
-              stage: { range: [46, 55] },
-              ages: [14, 26, 38, 50, 62]
-            },
-            {
-              name: '疾厄',
-              heavenlyStem: '癸',
-              earthlyBranch: '亥',
-              majorStars: [{ name: '廉贞', brightness: '庙' }],
-              minorStars: [],
-              adjectiveStars: [{ name: '天月', brightness: '庙' }],
-              stage: { range: [56, 65] },
-              ages: [16, 28, 40, 52, 64]
-            },
-            {
-              name: '迁移',
-              heavenlyStem: '甲',
-              earthlyBranch: '子',
-              majorStars: [{ name: '破军', brightness: '陷' }],
-              minorStars: [],
-              adjectiveStars: [{ name: '天巫', brightness: '庙' }],
-              stage: { range: [66, 75] },
-              ages: [18, 30, 42, 54, 66]
-            },
-            {
-              name: '交友',
-              heavenlyStem: '乙',
-              earthlyBranch: '丑',
-              majorStars: [{ name: '巨门', brightness: '庙' }],
-              minorStars: [],
-              adjectiveStars: [{ name: '天德', brightness: '庙' }],
-              stage: { range: [76, 85] },
-              ages: [20, 32, 44, 56, 68]
-            },
-            {
-              name: '事业',
-              heavenlyStem: '丙',
-              earthlyBranch: '寅',
-              majorStars: [{ name: '太阴', brightness: '庙' }],
-              minorStars: [],
-              adjectiveStars: [{ name: '龙池', brightness: '庙' }],
-              stage: { range: [86, 95] },
-              ages: [22, 34, 46, 58, 70]
-            },
-            {
-              name: '田宅',
-              heavenlyStem: '丁',
-              earthlyBranch: '卯',
-              majorStars: [{ name: '贪狼', brightness: '庙' }],
-              minorStars: [],
-              adjectiveStars: [{ name: '台辅', brightness: '庙' }],
-              stage: { range: [96, 105] },
-              ages: [24, 36, 48, 60, 72]
-            },
-            {
-              name: '福德',
-              heavenlyStem: '戊',
-              earthlyBranch: '辰',
-              majorStars: [{ name: '天梁', brightness: '庙' }],
-              minorStars: [],
-              adjectiveStars: [{ name: '八座', brightness: '庙' }],
-              stage: { range: [106, 115] },
-              ages: [26, 38, 50, 62, 74]
-            },
-            {
-              name: '父母',
-              heavenlyStem: '己',
-              earthlyBranch: '巳',
-              majorStars: [{ name: '天相', brightness: '庙' }],
-              minorStars: [],
-              adjectiveStars: [{ name: '天魁', brightness: '庙' }],
-              stage: { range: [116, 125] },
-              ages: [28, 40, 52, 64, 76]
-            }
-          ]
-        },
-        horoscope: {
-          age: { nominalAge: 26 },
-          yearly: { heavenlyStem: '庚' }
-        }
-      };
-      
-      // 添加用户输入的原始时间到模拟数据中
-      mockZiweiData.originalTime = {
-        hour: data.birthTime,
-        minute: data.birthMinute
-      };
-      
-      // 添加 targetYear 到模拟数据中，确保与 iztro 命盘显示的运势信息同步
-      mockZiweiData.targetYear = horoscopeYear;
-      
-      console.log('🟢 使用备选模拟数据，包含完整的 12 宫和星耀信息');
-      setZiweiData(mockZiweiData);
-      
-      const [sysPrompt, dataContext] = parseZiweiToPrompt(mockZiweiData);
+      // 如果 API 请求失败，显示错误信息
       setMessages([
-        { role: 'system', content: sysPrompt },
-        { role: 'system', content: dataContext },
         { 
           role: 'assistant', 
-          content: '你好！我已经完整解析了这张命盘的本命结构。\n你可以问我：\n1. **格局性格**：例如「我适合创业还是上班？」\n2. **情感婚姻**：例如「我的正缘有什么特征？」\n3. **流年运势**：例如「今年要注意什么？」' 
+          content: `抱歉，无法获取命盘数据。请检查网络连接后重试。\n\n错误信息: ${error instanceof Error ? error.message : '未知错误'}` 
         }
       ]);
     } finally {
@@ -472,22 +363,34 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-purple-50 to-blue-50">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-purple-50 to-blue-50 dark:from-gray-950 dark:to-gray-900">
       <div className="flex h-full">
-        <aside className="w-84 bg-white shadow-xl p-6 flex flex-col h-full">
-          <h1 className="text-2xl font-bold text-purple-700 mb-6">
-            🟣 AI 紫微斗数 Pro
-          </h1>
+        <aside className="w-84 bg-white dark:bg-gray-900 shadow-xl p-6 flex flex-col h-full">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold text-purple-700 dark:text-purple-400">
+              🟣 AI 紫微斗数 Pro
+            </h1>
+            <button
+              onClick={() => {
+                console.log('点击了切换按钮');
+                toggleDarkMode();
+              }}
+              className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+              aria-label={darkMode ? '切换到浅色模式' : '切换到深色模式'}
+            >
+              {darkMode ? '☀️' : '🌙'}
+            </button>
+          </div>
           
           <div className="mb-6">
-            <h2 className="text-sm font-semibold text-gray-900 mb-2">导航</h2>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">导航</h2>
             <div className="space-y-2">
               <button
                 onClick={() => setCurrentPage('命盘显示')}
                 className={`w-full text-left px-4 py-2 rounded-lg transition-all ${
                   currentPage === '命盘显示'
-                    ? 'bg-purple-100 text-purple-800 font-semibold'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400 font-semibold'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
                 📊 命盘显示
@@ -496,8 +399,8 @@ export default function Home() {
                 onClick={() => setCurrentPage('AI 命理师')}
                 className={`w-full text-left px-4 py-2 rounded-lg transition-all ${
                   currentPage === 'AI 命理师'
-                    ? 'bg-purple-100 text-purple-800 font-semibold'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-400 font-semibold'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
                 🤖 AI 命理师
@@ -506,14 +409,14 @@ export default function Home() {
           </div>
 
           <div className="mb-6">
-            <h2 className="text-sm font-semibold text-gray-900 mb-2">AI 模型</h2>
+            <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">AI 模型</h2>
             <select
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
-              className="w-full p-2 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none text-gray-900"
+              className="w-full p-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:border-purple-500 focus:outline-none text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
             >
               {AI_MODELS.map((model) => (
-                <option key={model} value={model} className="text-gray-900">{model}</option>
+                <option key={model} value={model} className="text-gray-900 dark:text-gray-100">{model}</option>
               ))}
             </select>
           </div>
@@ -528,7 +431,7 @@ export default function Home() {
             <div className="max-w-6xl mx-auto h-full overflow-y-auto">
               {hasBirthData && birthData ? (
                 <>
-                  <div className="bg-white rounded-2xl shadow-2xl p-8">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
 
                     <div className="flex justify-center">
                     <IztrolabeWrapper 
@@ -543,92 +446,185 @@ export default function Home() {
                   </div>
                   
                   {/* 大限和流年选择按钮 */}
-                  <div className="mt-6 bg-white rounded-2xl shadow-xl p-6">
+                  <div className="mt-6 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6">
                     {/* 大限选择 */}
                     <div className="mb-4">
                       <div className="flex flex-wrap gap-2">
-                        {[
-                          { range: '4~13', year: 2003 },
-                          { range: '14~23', year: 2013 },
-                          { range: '24~33', year: 2023 },
-                          { range: '34~43', year: 2033 },
-                          { range: '44~53', year: 2043 },
-                          { range: '54~63', year: 2053 },
-                          { range: '64~73', year: 2063 },
-                          { range: '74~83', year: 2073 },
-                          { range: '84~93', year: 2083 },
-                          { range: '94~103', year: 2093 },
-                          { range: '104~113', year: 2103 },
-                          { range: '114~123', year: 2113 }
-                        ].map((period, index) => {
-                          // 计算该大限对应的流年范围
-                          const startYear = period.year;
-                          const endYear = startYear + 9;
-                          
-                          return (
-                            <button
-                              key={index}
-                              onClick={() => handleHoroscopeDateChange(new Date(startYear, 5, 1))}
-                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                horoscopeYear >= startYear && horoscopeYear <= endYear
-                                  ? 'bg-purple-600 text-white shadow-md'
-                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                              disabled={isRefreshingData}
-                            >
-                              {period.range}
-                            </button>
-                          );
-                        })}
+                        {ziweiData?.astrolabe?.palaces ? (
+                          // 从十二宫位中获取大限信息，并按起始年龄从小到大排序
+                          ziweiData.astrolabe.palaces
+                            .filter((palace: any) => palace.decadal && palace.decadal.range)
+                            .map((palace: any) => ({
+                              decadal: palace.decadal,
+                              palaceName: palace.name,
+                              palaceGanzhi: palace.heavenlyStem + palace.earthlyBranch
+                            }))
+                            .sort((a: any, b: any) => a.decadal.range[0] - b.decadal.range[0])
+                            .map((item: any, index: number) => {
+                            const { decadal, palaceName, palaceGanzhi } = item;
+                            const [startAge, endAge] = decadal.range;
+                            
+                            return (
+                              <button
+                                key={index}
+                                onClick={() => {
+                                  // 选择大限时，先计算该大限第一年对应的年份
+                                  const birthDateParts = birthData?.birthday.split('-');
+                                  const birthYear = birthDateParts ? parseInt(birthDateParts[0]) : 2000;
+                                  const startYear = birthYear + startAge - 1;
+                                  handleHoroscopeDateChange(new Date(startYear, 5, 1));
+                                }}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                  (() => {
+                                    const birthDateParts = birthData?.birthday.split('-');
+                                    const birthYear = birthDateParts ? parseInt(birthDateParts[0]) : 2000;
+                                    const startYear = birthYear + startAge - 1;
+                                    const endYear = birthYear + endAge - 1;
+                                    return horoscopeYear >= startYear && horoscopeYear <= endYear;
+                                  })()
+                                    ? 'bg-purple-600 text-white shadow-md'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                }`}
+                                disabled={isRefreshingData}
+                              >
+                                {startAge}~{endAge} [{palaceGanzhi}]
+                              </button>
+                            );
+                          })
+                        ) : (
+                          // 如果没有命盘数据，使用硬编码的大限范围
+                          [
+                            { range: '5~14', year: 2003, ganzhi: '辛未' },
+                            { range: '15~24', year: 2013, ganzhi: '庚午' },
+                            { range: '25~34', year: 2023, ganzhi: '己巳' },
+                            { range: '35~44', year: 2033, ganzhi: '戊辰' },
+                            { range: '45~54', year: 2043, ganzhi: '丁卯' },
+                            { range: '55~64', year: 2053, ganzhi: '丙寅' },
+                            { range: '65~74', year: 2063, ganzhi: '丁丑' },
+                            { range: '75~84', year: 2073, ganzhi: '丙子' },
+                            { range: '85~94', year: 2083, ganzhi: '乙亥' },
+                            { range: '95~104', year: 2093, ganzhi: '甲戌' },
+                            { range: '105~114', year: 2103, ganzhi: '癸酉' },
+                            { range: '115~124', year: 2113, ganzhi: '壬申' }
+                          ].map((period, index) => {
+                            // 计算该大限对应的流年范围
+                            const startYear = period.year;
+                            const endYear = startYear + 9;
+                            
+                            return (
+                              <button
+                                key={index}
+                                onClick={() => handleHoroscopeDateChange(new Date(startYear, 5, 1))}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                  horoscopeYear >= startYear && horoscopeYear <= endYear
+                                    ? 'bg-purple-600 text-white shadow-md'
+                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                }`}
+                                disabled={isRefreshingData}
+                              >
+                                {period.range} [{period.ganzhi}]
+                              </button>
+                            );
+                          })
+                        )}
                       </div>
                     </div>
                     
                     {/* 流年选择 */}
                     <div className="mt-4">
                       {(() => {
-                        // 找到当前选中的大限
-                        const currentPeriod = [
-                          { range: '4~13', year: 2003 },
-                          { range: '14~23', year: 2013 },
-                          { range: '24~33', year: 2023 },
-                          { range: '34~43', year: 2033 },
-                          { range: '44~53', year: 2043 },
-                          { range: '54~63', year: 2053 },
-                          { range: '64~73', year: 2063 },
-                          { range: '74~83', year: 2073 },
-                          { range: '84~93', year: 2083 },
-                          { range: '94~103', year: 2093 },
-                          { range: '104~113', year: 2103 },
-                          { range: '114~123', year: 2113 }
-                        ].find(period => {
-                          const startYear = period.year;
-                          const endYear = startYear + 9;
-                          return horoscopeYear >= startYear && horoscopeYear <= endYear;
-                        });
-                        
-                        if (currentPeriod) {
-                          const startYear = currentPeriod.year;
-                          return (
-                            <div>
-                              <div className="text-sm font-semibold text-gray-600 mb-2">{currentPeriod.range} 大限流年</div>
-                              <div className="flex flex-wrap gap-2">
-                                {Array.from({ length: 10 }, (_, i) => startYear + i).map((year, yearIndex) => (
-                                  <button
-                                    key={yearIndex}
-                                    onClick={() => handleHoroscopeDateChange(new Date(year, 5, 1))}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                      horoscopeYear === year
-                                        ? 'bg-blue-600 text-white shadow-md'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                                    disabled={isRefreshingData}
-                                  >
-                                    {year}
-                                  </button>
-                                ))}
+                        if (ziweiData?.astrolabe?.palaces && birthData) {
+                          // 从十二宫位中找到当前选中的大限
+                          const birthDateParts = birthData.birthday.split('-');
+                          const birthYear = parseInt(birthDateParts[0]);
+                          
+                          const currentPeriod = ziweiData.astrolabe.palaces
+                            .filter((palace: any) => palace.decadal && palace.decadal.range)
+                            .map((palace: any) => ({
+                              decadal: palace.decadal,
+                              palaceName: palace.name
+                            }))
+                            .find((item: any) => {
+                              const [startAge, endAge] = item.decadal.range;
+                              const startYear = birthYear + startAge - 1;
+                              const endYear = birthYear + endAge - 1;
+                              return horoscopeYear >= startYear && horoscopeYear <= endYear;
+                            });
+                          
+                          if (currentPeriod) {
+                            const [startAge, endAge] = currentPeriod.decadal.range;
+                            const startYear = birthYear + startAge - 1;
+                            return (
+                              <div>
+                                <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">{startAge}~{endAge} 大限流年</div>
+                                <div className="flex flex-wrap gap-2">
+                                  {Array.from({ length: 10 }, (_, i) => startYear + i).map((year, yearIndex) => {
+                                    return (
+                                      <button
+                                        key={yearIndex}
+                                        onClick={() => handleHoroscopeDateChange(new Date(year, 5, 1))}
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                          horoscopeYear === year
+                                            ? 'bg-blue-600 text-white shadow-md'
+                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                        }`}
+                                        disabled={isRefreshingData}
+                                      >
+                                        {year}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
                               </div>
-                            </div>
-                          );
+                            );
+                          }
+                        } else {
+                          // 如果没有命盘数据，使用硬编码的大限范围
+                          const currentPeriod = [
+                            { range: '5~14', year: 2003 },
+                            { range: '15~24', year: 2013 },
+                            { range: '25~34', year: 2023 },
+                            { range: '35~44', year: 2033 },
+                            { range: '45~54', year: 2043 },
+                            { range: '55~64', year: 2053 },
+                            { range: '65~74', year: 2063 },
+                            { range: '75~84', year: 2073 },
+                            { range: '85~94', year: 2083 },
+                            { range: '95~104', year: 2093 },
+                            { range: '105~114', year: 2103 },
+                            { range: '115~124', year: 2113 }
+                          ].find(period => {
+                            const startYear = period.year;
+                            const endYear = startYear + 9;
+                            return horoscopeYear >= startYear && horoscopeYear <= endYear;
+                          });
+                          
+                          if (currentPeriod) {
+                            const startYear = currentPeriod.year;
+                            return (
+                              <div>
+                                <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">{currentPeriod.range} 大限流年</div>
+                                <div className="flex flex-wrap gap-2">
+                                  {Array.from({ length: 10 }, (_, i) => startYear + i).map((year, yearIndex) => {
+                                    return (
+                                      <button
+                                        key={yearIndex}
+                                        onClick={() => handleHoroscopeDateChange(new Date(year, 5, 1))}
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                          horoscopeYear === year
+                                            ? 'bg-blue-600 text-white shadow-md'
+                                            : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                        }`}
+                                        disabled={isRefreshingData}
+                                      >
+                                        {year}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          }
                         }
                         return null;
                       })()}
@@ -677,13 +673,13 @@ export default function Home() {
                 <div className="flex items-center justify-center h-full min-h-[600px]">
                   <div className="text-center">
                     <div className="text-6xl mb-4">👈</div>
-                    <p className="text-xl text-gray-500 mb-2">
+                    <p className="text-xl text-gray-500 dark:text-gray-400 mb-2">
                       请在左侧输入信息开始排盘
                     </p>
-                    <p className="text-gray-400">
+                    <p className="text-gray-400 dark:text-gray-500">
                       支持公历和农历，精确到时辰
                     </p>
-                    <p className="text-gray-400 text-sm mt-2">
+                    <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">
                       💡 按 F11 全屏浏览效果最佳
                     </p>
                   </div>
@@ -692,9 +688,9 @@ export default function Home() {
             </div>
           ) : (
             <div className="max-w-4xl mx-auto h-full flex flex-col">
-              <div className="bg-white rounded-2xl shadow-2xl flex-1 flex flex-col overflow-hidden">
-                <div className="p-6 border-b border-gray-200 shrink-0">
-                  <h2 className="text-xl font-bold text-gray-800">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl flex-1 flex flex-col overflow-hidden">
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700 shrink-0">
+                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-100">
                     🤖 AI 命理师 - {selectedModel}
                   </h2>
                 </div>
@@ -711,7 +707,7 @@ export default function Home() {
                         className={`max-w-[70%] p-4 rounded-2xl ${
                           message.role === 'user'
                             ? 'bg-purple-600 text-white'
-                            : 'bg-gray-100 text-gray-800'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
                         }`}
                       >
                         <p className="whitespace-pre-wrap">{message.content}</p>
@@ -720,7 +716,7 @@ export default function Home() {
                   ))}
                   {isLoading && (
                     <div className="flex justify-start">
-                      <div className="bg-gray-100 text-gray-800 p-4 rounded-2xl">
+                      <div className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 p-4 rounded-2xl">
                         <div className="flex space-x-2">
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
                           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
@@ -732,15 +728,15 @@ export default function Home() {
                   <div ref={messagesEndRef} />
                 </div>
                 
-                <div className="p-4 border-t border-gray-200 shrink-0">
+                <div className="p-4 border-t border-gray-200 dark:border-gray-700 shrink-0">
                   <div className="flex gap-2 mb-4">
                     <button
                       onClick={saveChatHistory}
-                      className="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                      className="px-4 py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
                     >
                       💾 保存对话
                     </button>
-                    <label className="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors cursor-pointer">
+                    <label className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors cursor-pointer">
                       📂 加载对话
                       <input
                         type="file"
@@ -757,7 +753,7 @@ export default function Home() {
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="输入你的问题..."
-                      className="flex-1 p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none resize-none text-gray-900"
+                      className="flex-1 p-3 border-2 border-gray-200 dark:border-gray-700 rounded-xl focus:border-purple-500 focus:outline-none resize-none text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-800"
                       rows={2}
                     />
                     <button
@@ -837,19 +833,45 @@ function IztrolabeWrapper({
   }
 
   const IztroComponent = Iztrolabe;
+  // 将小时数转换为时辰索引
   const shichenIndex = getShichenIndexFromHour(birthTime);
   const horoscopeDate = new Date(horoscopeYear, 5, 1); // 使用指定年份的6月1日作为horoscopeDate，确保过了农历新年，虚岁计算准确
   
   return (
     <div style={{ width: 1024, margin: '0 auto' }}>
-      <IztroComponent 
-        ref={iztroRef}
-        birthday={birthday}
-        birthTime={shichenIndex}
-        birthdayType={birthdayType}
-        gender={gender}
-        horoscopeDate={horoscopeDate}
-      />
+      <div className="relative">
+        <IztroComponent 
+          ref={iztroRef}
+          birthday={birthday}
+          birthTime={shichenIndex}
+          birthdayType={birthdayType}
+          gender={gender}
+          horoscopeDate={horoscopeDate}
+          fixLeap={true}
+          lang="zh-CN"
+        />
+        {/* 为命盘宫位添加边框样式 */}
+        <style jsx global>{`
+          /* 为命盘宫位添加加粗边框 */
+          .iztro-palace {
+            border: 2px solid #000 !important;
+          }
+          
+          /* 深色模式下使用白色边框 */
+          .dark .iztro-palace {
+            border: 2px solid #fff !important;
+          }
+          
+          /* 确保边框样式覆盖默认样式 */
+          .iztro-palace-inner {
+            border: none !important;
+          }
+          
+          .dark .iztro-palace-inner {
+            border: none !important;
+          }
+        `}</style>
+      </div>
     </div>
   );
 }
