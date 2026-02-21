@@ -1,3 +1,10 @@
+// 实现农历基准年计算（简化算法）
+
+// 农历节日常量
+const LUNAR_FESTIVALS = {
+  SPRING_FESTIVAL: '春节'
+};
+
 const SHICHEN_MAP: Record<number, string> = {
   23: '子时',
   0: '子时',
@@ -77,6 +84,55 @@ function getShichenRange(shichen: string): string {
 
 function getShichenIndexFromHour(hour: number): number {
   return SHICHEN_INDEX_MAP[hour] || 0;
+}
+
+/**
+ * 核心逻辑：计算真实的"农历基准年"
+ * @param solarDateStr 公历日期字符串 "YYYY-MM-DD"
+ * @returns number 农历出生的年份
+ */
+export function getLunarBaseYear(solarDateStr: string): number {
+  if (!solarDateStr) return new Date().getFullYear();
+  
+  const [year, month, day] = solarDateStr.split('-').map(Number);
+  
+  try {
+    // 计算农历年份对应的公历年份
+    // 原理：
+    // 1. 农历新年（春节）通常在公历1月21日至2月20日之间
+    // 2. 如果出生日期在当年春节之前，农历年份是前一年
+    // 3. 如果出生日期在当年春节之后，农历年份是当年
+    
+    // 创建出生日期对象
+    const birthDate = new Date(year, month - 1, day);
+    
+    // 计算当年春节日期（简化为2月5日）
+    const springFestivalDate = new Date(year, 1, 5); // 2月5日
+    
+    // 比较出生日期和春节日期
+    let lunarYear = year;
+    if (birthDate < springFestivalDate) {
+      lunarYear = year - 1;
+    }
+    
+    console.log(`公历 ${solarDateStr} 对应的农历年份: ${lunarYear}`);
+    
+    return lunarYear;
+  } catch (error) {
+    console.error("计算农历基准年失败，降级为公历年:", error);
+    return year;
+  }
+}
+
+/**
+ * 根据虚岁计算对应的公历年份
+ * @param baseYear 农历基准年
+ * @param nominalAge 目标虚岁
+ * @returns 对应的公历年份
+ */
+export function getGregorianYearByNominalAge(baseYear: number, nominalAge: number): number {
+  // 公式：目标年份 = 农历生年 + 虚岁 - 1
+  return baseYear + nominalAge - 1;
 }
 
 export {

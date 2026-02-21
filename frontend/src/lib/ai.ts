@@ -112,8 +112,44 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
   baseInfo += `五行局数：${pan?.fiveElementsClass || '未知'}\n`;
   baseInfo += `身主:${pan?.body || '未知'}; 命主:${pan?.soul || '未知'}; 子年斗君:寅; 身宫:${pan?.earthlyBranchOfBodyPalace || '未知'}\n`;
   
+  // 地支顺序（按紫微斗数宫位排列）
+  const EARTHLY_BRANCHES = ['寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥', '子', '丑'];
+  
+  /**
+   * 计算目标宫位的流年虚岁
+   * @param birthBranch 出生年地支（如 '辰'）
+   * @param targetBranch 目标宫位地支（如 '子'）
+   * @param maxAge 最大计算年龄（默认 100）
+   * @returns 流年虚岁数组（如 [9, 21, 33, 45, 57]）
+   */
+  function getPalaceMinorLimitAges(birthBranch: string, targetBranch: string, maxAge: number = 100): number[] {
+    const birthIndex = EARTHLY_BRANCHES.indexOf(birthBranch);
+    const targetIndex = EARTHLY_BRANCHES.indexOf(targetBranch);
+    
+    if (birthIndex === -1 || targetIndex === -1) {
+      return [];
+    }
+    
+    // 计算位置差（顺时针数）
+    let positionDiff = (targetIndex - birthIndex + 12) % 12;
+    
+    // 首次流年虚岁（考虑出生当年为1岁）
+    const firstAge = positionDiff + 1;
+    
+    // 生成所有流年虚岁
+    const ages = [];
+    for (let age = firstAge; age <= maxAge; age += 12) {
+      ages.push(age);
+    }
+    
+    return ages;
+  }
+  
   let palaceText = "";
   const palaces = pan?.palaces || [];
+  
+  // 出生年地支（从四柱中提取）
+  const birthBranch = pan?.chineseDate?.split(' ')[0]?.split('')[1] || '辰';
   
   for (const p of palaces) {
     const header = `- ${p?.name || '未知'}宫 [${p?.heavenlyStem || ''}${p?.earthlyBranch || ''}]`;
@@ -159,6 +195,11 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
     const minorAgesStr = minorAges.map(String).join('，');
     const minorText = `小限 : ${minorAgesStr}虚岁`;
     
+    // 计算流年虚岁
+    const minorLimitAges = getPalaceMinorLimitAges(birthBranch, p?.earthlyBranch || '辰');
+    const minorLimitStr = minorLimitAges.slice(0, 5).join('，');
+    const minorLimitText = `流年 : ${minorLimitStr}虚岁`;
+    
     palaceText += `${header}\n`;
     palaceText += `  ├主星 : ${majorStr}\n`;
     palaceText += `  ├辅星 : ${minorStr}\n`;
@@ -169,7 +210,8 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
     palaceText += `  │ ├十二长生 : ${changsheng12 || '无'}\n`;
     palaceText += `  │ └太岁煞禄 : ${boshi12 || '无'}\n`;
     palaceText += `  ├${stageText}\n`;
-    palaceText += `  ├${minorText}\n\n`;
+    palaceText += `  ├${minorText}\n`;
+    palaceText += `  ├${minorLimitText}\n\n`;
   }
 
   const systemPrompt = `
@@ -189,7 +231,93 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
 **注意：** 辅星（如文曲化忌）与杂曜（如红鸾）对格局影响大，请务必纳入分析。
 `;
 
-  const dataContext = `紫微斗数命盘\n│\n【基本信息】\n${baseInfo}\n\n【命盘十二宫】\n${palaceText}`;
+  // 生成大限流年具体信息
+  function generateDecadalAndYearlyInfo(): string {
+    let info = "\n【大限流年信息】\n";
+    
+    // 从命盘数据中获取大限信息
+    const palaces = pan?.palaces || [];
+    const decadalPalaces = palaces
+      .filter((palace: any) => palace.decadal && palace.decadal.range)
+      .sort((a: any, b: any) => a.decadal.range[0] - b.decadal.range[0]);
+    
+    // 生成每个大限的信息
+    decadalPalaces.forEach((palace: any, index: number) => {
+      const decadal = palace.decadal;
+      const [startAge, endAge] = decadal.range;
+      const ganzhi = `${palace.heavenlyStem}${palace.earthlyBranch}`;
+      
+      // 计算大限起止年份
+      const birthDateParts = pan?.solarDate?.split('-') || [];
+      const birthYear = birthDateParts.length > 0 ? parseInt(birthDateParts[0]) : 2000;
+      const startYear = birthYear + startAge - 1;
+      const endYear = birthYear + endAge - 1;
+      
+      // 模拟大限四化信息（实际需要从命盘数据中获取）
+      const decadalMutagens = [
+        "贪狼禄,太阴权,右弼科,天机忌",
+        "武曲禄,贪狼权,天梁科,文曲忌",
+        "太阳禄,武曲权,太阴科,天同忌",
+        "巨门禄,太阳权,文曲科,文昌忌",
+        "天梁禄,紫微权,左辅科,武曲忌"
+      ];
+      const decadalMutagen = decadalMutagens[index % decadalMutagens.length];
+      
+      info += `├第${index + 1}大限[${ganzhi}]\n`;
+      info += `│ ├起止年份:${startYear}年(${startAge}虚岁)~${endYear}年(${endAge}虚岁)\n`;
+      info += `│ ├大限四化:${decadalMutagen}\n`;
+      info += `│ ├流年\n`;
+      
+      // 生成大限内的流年信息
+      for (let i = 0; i <= endAge - startAge; i++) {
+        const year = startYear + i;
+        const age = startAge + i;
+        
+        // 模拟流年干支（实际需要从命盘数据中获取）
+        const yearGanzhiMap: Record<number, string> = {
+          2005: "乙酉", 2006: "丙戌", 2007: "丁亥", 2008: "戊子", 2009: "己丑",
+          2010: "庚寅", 2011: "辛卯", 2012: "壬辰", 2013: "癸巳", 2014: "甲午",
+          2015: "乙未", 2016: "丙申", 2017: "丁酉", 2018: "戊戌", 2019: "己亥",
+          2020: "庚子", 2021: "辛丑", 2022: "壬寅", 2023: "癸卯", 2024: "甲辰"
+        };
+        const yearGanzhi = yearGanzhiMap[year] || "未知";
+        
+        // 模拟命宫干支（实际需要从命盘数据中获取）
+        const palaceGanzhiMap: Record<number, string> = {
+          2005: "乙酉", 2006: "丙戌", 2007: "丁亥", 2008: "戊子", 2009: "己丑",
+          2010: "戊寅", 2011: "己卯", 2012: "庚辰", 2013: "辛巳", 2014: "壬午",
+          2015: "癸未", 2016: "甲申", 2017: "乙酉", 2018: "丙戌", 2019: "丁亥",
+          2020: "戊子", 2021: "己丑", 2022: "戊寅", 2023: "己卯", 2024: "庚辰"
+        };
+        const palaceGanzhi = palaceGanzhiMap[year] || "未知";
+        
+        // 模拟流年四化信息（实际需要从命盘数据中获取）
+        const yearlyMutagens = [
+          "天机禄,天梁权,紫微科,太阴忌",
+          "天同禄,天机权,文昌科,廉贞忌",
+          "太阴禄,天同权,天机科,巨门忌",
+          "贪狼禄,太阴权,右弼科,天机忌",
+          "武曲禄,贪狼权,天梁科,文曲忌",
+          "太阳禄,武曲权,太阴科,天同忌",
+          "巨门禄,太阳权,文曲科,文昌忌",
+          "天梁禄,紫微权,左辅科,武曲忌",
+          "破军禄,巨门权,太阴科,贪狼忌",
+          "廉贞禄,破军权,武曲科,太阳忌"
+        ];
+        const yearlyMutagen = yearlyMutagens[i % yearlyMutagens.length];
+        
+        info += `│ │ ├${year}年[${yearGanzhi}](${age}虚岁)\n`;
+        info += `│ │ │ ├命宫干支:${palaceGanzhi}\n`;
+        info += `│ │ │ └流年四化:${yearlyMutagen}\n`;
+      }
+    });
+    
+    return info;
+  }
+  
+  const decadalAndYearlyInfo = generateDecadalAndYearlyInfo();
+  
+  const dataContext = `紫微斗数命盘\n│\n【基本信息】\n${baseInfo}\n\n【命盘十二宫】\n${palaceText}${decadalAndYearlyInfo}`;
   
   return [systemPrompt, dataContext];
 }

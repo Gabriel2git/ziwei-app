@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import BirthForm from '@/components/BirthForm';
-import { getShichenIndexFromHour } from '@/lib/shichen';
+import { getShichenIndexFromHour, getLunarBaseYear, getGregorianYearByNominalAge } from '@/lib/shichen';
 import {
   Message,
   AI_MODELS,
@@ -11,6 +11,7 @@ import {
   generateMasterPrompt,
   getLLMResponse
 } from '@/lib/ai';
+import { Solar } from 'chinese-lunar-calendar';
 
 
 export default function Home() {
@@ -100,26 +101,20 @@ export default function Home() {
       setZiweiData(realZiweiData);
       
       // 计算虚岁并更新状态
-      if (birthData) {
-        const birthDateParts = birthData.birthday.split('-');
-        const birthYear = parseInt(birthDateParts[0]);
-        const birthMonth = parseInt(birthDateParts[1]);
-        const birthDay = parseInt(birthDateParts[2]);
-        
-        // 使用 chinese-lunar-calendar 库计算虚岁
-        try {
-          const birthSolar = Solar.fromYmdHms(birthYear, birthMonth, birthDay, 0, 0, 0);
-          const targetSolar = Solar.fromYmdHms(newYear, 1, 1, 0, 0, 0);
-          
-          // 计算虚岁
-          const calculatedAge = newYear - birthYear + 1;
-          
-          setNominalAge(calculatedAge);
-          console.log('计算的虚岁:', calculatedAge);
-        } catch (error) {
-          console.error('虚岁计算错误:', error);
-        }
-      }
+          if (birthData) {
+            try {
+              // 1. 拿到用户真实的农历出生年
+              const baseYear = getLunarBaseYear(birthData.birthday);
+              
+              // 2. 虚岁 = 目标年份 - 农历出生年 + 1
+              const calculatedAge = newYear - baseYear + 1;
+              
+              setNominalAge(calculatedAge);
+              console.log('计算的真实虚岁:', calculatedAge);
+            } catch (error) {
+              console.error('虚岁计算错误:', error);
+            }
+          }
       
       // 更新 AI prompt
       const [sysPrompt, dataContext] = parseZiweiToPrompt(realZiweiData);
@@ -464,24 +459,22 @@ export default function Home() {
                             const { decadal, palaceName, palaceGanzhi } = item;
                             const [startAge, endAge] = decadal.range;
                             
+                            // ⭐️ 新逻辑：获取真实的农历基准年
+                            const baseYear = birthData?.birthday ? getLunarBaseYear(birthData.birthday) : 2000;
+                            
+                            // 计算该大限的起止年份
+                            const startYear = getGregorianYearByNominalAge(baseYear, startAge);
+                            const endYear = getGregorianYearByNominalAge(baseYear, endAge);
+                            
                             return (
                               <button
                                 key={index}
                                 onClick={() => {
-                                  // 选择大限时，先计算该大限第一年对应的年份
-                                  const birthDateParts = birthData?.birthday.split('-');
-                                  const birthYear = birthDateParts ? parseInt(birthDateParts[0]) : 2000;
-                                  const startYear = birthYear + startAge - 1;
+                                  // 点击时，跳转到该大限第一年的 6 月 1 日（避开年初春节边界）
                                   handleHoroscopeDateChange(new Date(startYear, 5, 1));
                                 }}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                  (() => {
-                                    const birthDateParts = birthData?.birthday.split('-');
-                                    const birthYear = birthDateParts ? parseInt(birthDateParts[0]) : 2000;
-                                    const startYear = birthYear + startAge - 1;
-                                    const endYear = birthYear + endAge - 1;
-                                    return horoscopeYear >= startYear && horoscopeYear <= endYear;
-                                  })()
+                                  horoscopeYear >= startYear && horoscopeYear <= endYear
                                     ? 'bg-purple-600 text-white shadow-md'
                                     : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                                 }`}
@@ -538,6 +531,9 @@ export default function Home() {
                           const birthDateParts = birthData.birthday.split('-');
                           const birthYear = parseInt(birthDateParts[0]);
                           
+                          // ⭐️ 新逻辑：获取真实的农历基准年
+                          const baseYear = birthData?.birthday ? getLunarBaseYear(birthData.birthday) : 2000;
+                          
                           const currentPeriod = ziweiData.astrolabe.palaces
                             .filter((palace: any) => palace.decadal && palace.decadal.range)
                             .map((palace: any) => ({
@@ -546,19 +542,28 @@ export default function Home() {
                             }))
                             .find((item: any) => {
                               const [startAge, endAge] = item.decadal.range;
-                              const startYear = birthYear + startAge - 1;
-                              const endYear = birthYear + endAge - 1;
+                              const startYear = getGregorianYearByNominalAge(baseYear, startAge);
+                              const endYear = getGregorianYearByNominalAge(baseYear, endAge);
                               return horoscopeYear >= startYear && horoscopeYear <= endYear;
                             });
                           
                           if (currentPeriod) {
                             const [startAge, endAge] = currentPeriod.decadal.range;
-                            const startYear = birthYear + startAge - 1;
+                            
+                            // ⭐️ 新逻辑：获取真实的农历基准年
+                            const baseYear = birthData?.birthday ? getLunarBaseYear(birthData.birthday) : 2000;
+                            console.log(`农历基准年: ${baseYear}, 出生年份: ${birthData?.birthday}`);
+                            
+                            // 计算该大限的起始年份
+                            const startYear = getGregorianYearByNominalAge(baseYear, startAge);
+                            console.log(`大限起始年龄: ${startAge}, 大限起始年份: ${startYear}`);
+
                             return (
                               <div>
                                 <div className="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-2">{startAge}~{endAge} 大限流年</div>
                                 <div className="flex flex-wrap gap-2">
-                                  {Array.from({ length: 10 }, (_, i) => startYear + i).map((year, yearIndex) => {
+                                  {Array.from({ length: endAge - startAge + 1 }, (_, i) => startYear + i).map((year, yearIndex) => {
+                                    console.log(`生成流年年份: ${year}`);
                                     return (
                                       <button
                                         key={yearIndex}
@@ -802,19 +807,74 @@ function IztrolabeWrapper({
     }
   }, []);
 
+  // 🎯 终极杀手锏：基于 ComputedStyle 的颜色强制替换
+  useEffect(() => {
+    if (!Iztrolabe) return;
+
+    const fixPurpleStars = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      // 找到命盘容器
+      const container = document.querySelector('.iztro-container');
+      if (!container) return;
+
+      // 遍历里面所有的 span 标签
+      const spans = container.querySelectorAll('span');
+      spans.forEach((span) => {
+        const htmlSpan = span as HTMLElement;
+        
+        // 获取浏览器最终渲染出来的真实颜色（必定是 rgb(r, g, b) 格式，无视原始代码写法）
+        const computedColor = window.getComputedStyle(htmlSpan).color;
+
+        // 匹配标准的紫色 rgb(128, 0, 128)
+        if (computedColor === 'rgb(128, 0, 128)') {
+          if (isDark) {
+            // 深色模式：强制覆盖为亮黄色并加粗
+            htmlSpan.style.setProperty('color', '#ffff6b', 'important');
+            htmlSpan.style.setProperty('font-weight', 'bold', 'important');
+            htmlSpan.style.setProperty('text-shadow', '0px 1px 2px rgba(0,0,0,0.8)', 'important');
+          } else {
+            // 浅色模式：恢复为紫色
+            htmlSpan.style.setProperty('color', 'rgb(128, 0, 128)', 'important');
+            htmlSpan.style.setProperty('font-weight', 'normal', 'important');
+            htmlSpan.style.removeProperty('text-shadow');
+          }
+        }
+      });
+    };
+
+    // 1. 组件加载或更新后，稍微延迟执行以确保 DOM 已渲染
+    const timer = setTimeout(fixPurpleStars, 150);
+
+    // 2. 监听命盘内部的 DOM 变化（完美解决：点击切换流年时颜色又变回紫色的问题）
+    const container = document.querySelector('.iztro-container');
+    let domObserver: MutationObserver | null = null;
+    if (container) {
+      domObserver = new MutationObserver(() => {
+        // 当 React 重新渲染命盘内部时，再次触发替换
+        fixPurpleStars();
+      });
+      domObserver.observe(container, { childList: true, subtree: true });
+    }
+
+    // 3. 监听深色/浅色模式切换按钮
+    const darkObserver = new MutationObserver(fixPurpleStars);
+    darkObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+    return () => {
+      clearTimeout(timer);
+      if (domObserver) domObserver.disconnect();
+      darkObserver.disconnect();
+    };
+  }, [Iztrolabe, horoscopeYear]); // 依赖项加上 horoscopeYear，确保流年切换时重新绑定
+
   // 监听命盘日期变化
   useEffect(() => {
     if (iztroRef.current) {
-      // 获取iztro实例
       const iztroInstance = iztroRef.current.getInstance();
       if (iztroInstance) {
-        // 保存原始的日期变更方法
         const originalSetHoroscopeDate = iztroInstance.setHoroscopeDate;
-        
-        // 重写日期变更方法，添加回调
         iztroInstance.setHoroscopeDate = function(date: any) {
           const result = originalSetHoroscopeDate.call(this, date);
-          // 调用回调函数，通知父组件日期变更
           if (onHoroscopeDateChange && date) {
             onHoroscopeDateChange(new Date(date));
           }
@@ -826,16 +886,15 @@ function IztrolabeWrapper({
 
   if (!Iztrolabe) {
     return (
-      <div className="w-[1024px] h-[800px] bg-gray-100 rounded-xl flex items-center justify-center">
-        <div className="text-gray-500">加载命盘组件中...</div>
+      <div className="w-[1024px] h-[800px] bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center">
+        <div className="text-gray-500 dark:text-gray-400">加载命盘组件中...</div>
       </div>
     );
   }
 
   const IztroComponent = Iztrolabe;
-  // 将小时数转换为时辰索引
   const shichenIndex = getShichenIndexFromHour(birthTime);
-  const horoscopeDate = new Date(horoscopeYear, 5, 1); // 使用指定年份的6月1日作为horoscopeDate，确保过了农历新年，虚岁计算准确
+  const horoscopeDate = new Date(horoscopeYear, 5, 1);
   
   return (
     <div style={{ width: 1024, margin: '0 auto' }}>
@@ -850,49 +909,29 @@ function IztrolabeWrapper({
           fixLeap={true}
           lang="zh-CN"
         />
-        {/* 为命盘宫位添加边框样式 */}
+        
+        {/* 全局样式覆盖区：只处理背景和边框，文本颜色交由上方 JS 处理 */}
         <style jsx global>{`
-          /* 为命盘宫位添加加粗边框 */
-          .iztro-palace {
-            border: 2px solid #000 !important;
-          }
+          .iztro-container { background-color: transparent !important; }
+          .iztro-palace { border: 2px solid #000 !important; background-color: #ffffff !important; }
+          .iztro-palace-inner { border: none !important; background-color: transparent !important; color: #333 !important; }
           
-          /* 深色模式下使用白色边框和浅灰色背景 */
+          /* 深色模式基础盘面 */
           .dark .iztro-palace {
-            border: 2px solid #fff !important;
-            background-color: #333333 !important;
+            border: 2px solid #555 !important;
+            background-color: #2d2d2d !important;
           }
           
-          /* 确保边框样式覆盖默认样式 */
-          .iztro-palace-inner {
-            border: none !important;
-          }
-          
-          .dark .iztro-palace-inner {
-            border: none !important;
-            background-color: transparent !important;
-          }
-          
-          /* 深色模式下调整文字颜色，确保清晰可读 */
           .dark .iztro-palace-inner {
             color: #ffffff !important;
           }
           
-          /* 深色模式下调整星耀颜色，提高可读性 */
-          .dark .iztro-palace-inner [style*="color: rgb(128, 0, 128)"] {
-            color: #ff00ff !important; /* 亮粉色/紫色替代原来的深紫色，在灰色背景下更亮眼 */
-          }
+          /* 深色模式下的轻微全局提亮 (移除，防止影响黄色的显色) */
+          /* .dark .iztro-palace-inner span { filter: brightness(1.4) !important; } */
           
-          .dark .iztro-palace-inner [style*="color: rgb(255, 0, 0)"] {
-            color: #ff8080 !important; /* 亮红色替代原来的红色 */
-          }
-          
-          .dark .iztro-palace-inner [style*="color: rgb(0, 128, 0)"] {
-            color: #80ff80 !important; /* 亮绿色替代原来的绿色 */
-          }
-          
-          .dark .iztro-palace-inner [style*="color: rgb(0, 0, 255)"] {
-            color: #8080ff !important; /* 亮蓝色替代原来的蓝色 */
+          /* 基础信息区颜色 */
+          .dark .iztro-info {
+            color: #e5e7eb !important;
           }
         `}</style>
       </div>
