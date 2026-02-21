@@ -880,7 +880,7 @@ function IztrolabeWrapper({
           
           /* 深色模式下调整星耀颜色，提高可读性 */
           .dark .iztro-palace-inner [style*="color: rgb(128, 0, 128)"] {
-            color: #ff6bff !important; /* 亮紫色替代原来的深紫色 */
+            color: #ff00ff !important; /* 亮粉色/紫色替代原来的深紫色，在灰色背景下更亮眼 */
           }
           
           .dark .iztro-palace-inner [style*="color: rgb(255, 0, 0)"] {
