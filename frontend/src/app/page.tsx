@@ -877,6 +877,23 @@ function IztrolabeWrapper({
           .dark .iztro-palace-inner {
             color: #ffffff !important;
           }
+          
+          /* 深色模式下调整星耀颜色，提高可读性 */
+          .dark .iztro-palace-inner [style*="color: rgb(128, 0, 128)"] {
+            color: #ff6bff !important; /* 亮紫色替代原来的深紫色 */
+          }
+          
+          .dark .iztro-palace-inner [style*="color: rgb(255, 0, 0)"] {
+            color: #ff8080 !important; /* 亮红色替代原来的红色 */
+          }
+          
+          .dark .iztro-palace-inner [style*="color: rgb(0, 128, 0)"] {
+            color: #80ff80 !important; /* 亮绿色替代原来的绿色 */
+          }
+          
+          .dark .iztro-palace-inner [style*="color: rgb(0, 0, 255)"] {
+            color: #8080ff !important; /* 亮蓝色替代原来的蓝色 */
+          }
         `}</style>
       </div>
     </div>
