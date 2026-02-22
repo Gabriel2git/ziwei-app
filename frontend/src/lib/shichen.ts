@@ -1,4 +1,5 @@
-// 实现农历基准年计算（简化算法）
+// 使用chinese-lunar-calendar库实现精确的农历基准年计算
+import { getLunar } from 'chinese-lunar-calendar';
 
 // 农历节日常量
 const LUNAR_FESTIVALS = {
@@ -97,17 +98,53 @@ export function getLunarBaseYear(solarDateStr: string): number {
   const [year, month, day] = solarDateStr.split('-').map(Number);
   
   try {
+    // 使用chinese-lunar-calendar库计算精确的农历日期
+    const lunar = getLunar(year, month, day);
+    
+    // 获取农历年份（如"己卯年"）
+    const lunarYearStr = lunar.lunarYear;
+    
+    // 从农历年份字符串中提取数字部分
+    // 农历年份格式：天干地支年（如"己卯年"）
+    // 我们需要将其转换为对应的公历年份数字
+    
     // 计算农历年份对应的公历年份
-    // 原理：
-    // 1. 农历新年（春节）通常在公历1月21日至2月20日之间
-    // 2. 如果出生日期在当年春节之前，农历年份是前一年
-    // 3. 如果出生日期在当年春节之后，农历年份是当年
+    // 1. 先获取当年农历新年的公历日期
+    // 2. 比较出生日期和农历新年日期
+    // 3. 如果出生在农历新年之前，农历年份是前一年
+    // 4. 如果出生在农历新年之后，农历年份是当年
     
     // 创建出生日期对象
     const birthDate = new Date(year, month - 1, day);
     
-    // 计算当年春节日期（简化为2月5日）
-    const springFestivalDate = new Date(year, 1, 5); // 2月5日
+    // 获取当年农历新年的公历日期
+    // 农历新年是农历正月初一，对应的公历日期
+    let springFestivalYear = year;
+    let springFestivalMonth = 2;
+    let springFestivalDay = 5;
+    
+    // 使用chinese-lunar-calendar库计算当年春节日期
+    // 尝试获取农历正月初一的公历日期
+    for (let d = 1; d <= 20; d++) {
+      const testLunar = getLunar(year, 2, d);
+      if (testLunar.lunarMonth === 1 && testLunar.lunarDay === 1) {
+        springFestivalMonth = 2;
+        springFestivalDay = d;
+        break;
+      }
+    }
+    
+    // 检查1月份
+    for (let d = 21; d <= 31; d++) {
+      const testLunar = getLunar(year, 1, d);
+      if (testLunar.lunarMonth === 1 && testLunar.lunarDay === 1) {
+        springFestivalMonth = 1;
+        springFestivalDay = d;
+        break;
+      }
+    }
+    
+    const springFestivalDate = new Date(year, springFestivalMonth - 1, springFestivalDay);
     
     // 比较出生日期和春节日期
     let lunarYear = year;
@@ -115,7 +152,8 @@ export function getLunarBaseYear(solarDateStr: string): number {
       lunarYear = year - 1;
     }
     
-    console.log(`公历 ${solarDateStr} 对应的农历年份: ${lunarYear}`);
+    console.log(`公历 ${solarDateStr} 对应的农历年份: ${lunarYear}（${lunarYearStr}）`);
+    console.log(`当年春节日期: ${springFestivalDate.toISOString().split('T')[0]}`);
     
     return lunarYear;
   } catch (error) {
