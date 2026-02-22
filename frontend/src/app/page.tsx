@@ -11,7 +11,6 @@ import {
   generateMasterPrompt,
   getLLMResponse
 } from '@/lib/ai';
-import { Solar } from 'chinese-lunar-calendar';
 
 
 export default function Home() {
