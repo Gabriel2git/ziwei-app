@@ -93,7 +93,7 @@ export default function Home() {
   const [showSavedCases, setShowSavedCases] = useState(false);
   
   const [selectedDecadal, setSelectedDecadal] = useState<DecadalInfo | null>(null);
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);

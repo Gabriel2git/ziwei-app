@@ -1,6 +1,28 @@
+// 紫微斗数天干四化表类型定义
+interface SihuaMap {
+  禄: string;
+  权: string;
+  科: string;
+  忌: string;
+}
+
+interface SihuaTable {
+  [key: string]: SihuaMap;
+  '甲': SihuaMap;
+  '乙': SihuaMap;
+  '丙': SihuaMap;
+  '丁': SihuaMap;
+  '戊': SihuaMap;
+  '己': SihuaMap;
+  '庚': SihuaMap;
+  '辛': SihuaMap;
+  '壬': SihuaMap;
+  '癸': SihuaMap;
+}
+
 // 紫微斗数天干四化表
 // 格式：天干 -> { 禄, 权, 科, 忌 }
-export const SIHUA_TABLE = {
+export const SIHUA_TABLE: SihuaTable = {
   '甲': { 禄: '廉贞', 权: '破军', 科: '武曲', 忌: '太阳' },
   '乙': { 禄: '天机', 权: '天梁', 科: '紫微', 忌: '太阴' },
   '丙': { 禄: '天同', 权: '天机', 科: '文昌', 忌: '廉贞' },

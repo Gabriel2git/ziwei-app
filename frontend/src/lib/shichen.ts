@@ -127,7 +127,7 @@ export function getLunarBaseYear(solarDateStr: string): number {
     // 尝试获取农历正月初一的公历日期
     for (let d = 1; d <= 20; d++) {
       const testLunar = getLunar(year, 2, d);
-      if (testLunar.lunarMonth === 1 && testLunar.lunarDate === 1) {
+      if (testLunar.lunarMonth === 1 && testLunar.lunarDay === 1) {
         springFestivalMonth = 2;
         springFestivalDay = d;
         break;
@@ -137,7 +137,7 @@ export function getLunarBaseYear(solarDateStr: string): number {
     // 检查1月份
     for (let d = 21; d <= 31; d++) {
       const testLunar = getLunar(year, 1, d);
-      if (testLunar.lunarMonth === 1 && testLunar.lunarDate === 1) {
+      if (testLunar.lunarMonth === 1 && testLunar.lunarDay === 1) {
         springFestivalMonth = 1;
         springFestivalDay = d;
         break;
