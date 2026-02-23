@@ -127,7 +127,7 @@ export function getLunarBaseYear(solarDateStr: string): number {
     // 尝试获取农历正月初一的公历日期
     for (let d = 1; d <= 20; d++) {
       const testLunar = getLunar(year, 2, d);
-      if (testLunar.lunarMonth === 1 && testLunar.lunarDay === 1) {
+      if (testLunar.lunarMonth === 1 && testLunar.lunarDate === 1) {
         springFestivalMonth = 2;
         springFestivalDay = d;
         break;
@@ -137,7 +137,7 @@ export function getLunarBaseYear(solarDateStr: string): number {
     // 检查1月份
     for (let d = 21; d <= 31; d++) {
       const testLunar = getLunar(year, 1, d);
-      if (testLunar.lunarMonth === 1 && testLunar.lunarDay === 1) {
+      if (testLunar.lunarMonth === 1 && testLunar.lunarDate === 1) {
         springFestivalMonth = 1;
         springFestivalDay = d;
         break;
@@ -171,6 +171,29 @@ export function getLunarBaseYear(solarDateStr: string): number {
 export function getGregorianYearByNominalAge(baseYear: number, nominalAge: number): number {
   // 公式：目标年份 = 农历生年 + 虚岁 - 1
   return baseYear + nominalAge - 1;
+}
+
+/**
+ * 根据年份获取对应的地支
+ * @param year 年份
+ * @returns 地支字符串
+ */
+export function getEarthlyBranchByYear(year: number): string {
+  if (isNaN(year)) {
+    return '子'; // 默认返回子
+  }
+  
+  // 地支顺序：子、丑、寅、卯、辰、巳、午、未、申、酉、戌、亥
+  const earthlyBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+  
+  // 以1900年为基准（1900年是子年）
+  const baseYear = 1900;
+  const index = (year - baseYear) % 12;
+  
+  // 处理负数情况
+  const normalizedIndex = (index + 12) % 12;
+  
+  return earthlyBranches[normalizedIndex];
 }
 
 export {

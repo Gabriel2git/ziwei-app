@@ -7,11 +7,18 @@
   --foreground: #171717;
 }
 
+/* 紫薇派风格的深色模式 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0f1a1a;
+    --foreground: #e0f0f0;
   }
+}
+
+/* 强制深色模式为紫薇派风格 */
+.dark {
+  --background: #0f1a1a;
+  --foreground: #e0f0f0;
 }
 
 body {
@@ -23,5 +30,37 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  /* 紫薇派风格的星星颜色 */
+  .star-red {
+    color: #ff4444;
+  }
+  .star-green {
+    color: #44ff44;
+  }
+  .star-blue {
+    color: #4444ff;
+  }
+  .star-yellow {
+    color: #ffff44;
+  }
+  .star-purple {
+    color: #ff44ff;
+  }
+  
+  /* 紫薇派风格的线条 */
+  .ziwei-border {
+    border-color: #ff6600;
+  }
+  
+  /* 紫薇派风格的背景 */
+  .ziwei-bg {
+    background-color: #0f1a1a;
+  }
+  
+  /* 紫薇派风格的文字 */
+  .ziwei-text {
+    color: #e0f0f0;
   }
 }
