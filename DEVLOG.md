@@ -194,3 +194,317 @@
 - 统一了大限和流年的计算基准，提高了系统的一致性
 - 优化了生年虚岁特殊情况的处理，增强了系统的鲁棒性
 - 减少了计算逻辑的差异，降低了维护成本
+
+## 2026-02-23 取消对react-iztro的依赖重构命盘
+
+### 问题描述
+- 之前使用react-iztro库渲染命盘，存在以下问题：
+  - 库的版本更新不及时，可能存在安全隐患
+  - 库的组件结构不够灵活，难以满足自定义需求
+  - 库的渲染逻辑复杂，不利于调试和维护
+  - 对库的依赖增加了项目的体积和复杂性
+
+### 技术实现
+1. **移除react-iztro依赖**：
+   - 从项目中移除react-iztro库的依赖
+   - 不再使用库提供的组件和工具函数
+
+2. **重构命盘组件**：
+   - **ZiweiChart组件**：负责命盘的整体布局，使用CSS Grid实现4x4的宫位网格
+   - **PalaceCell组件**：负责单个宫位的渲染，包括星曜、宫名、干支等信息
+   - **CenterInfo组件**：负责命盘中心信息的显示，包括出生信息、命盘标题等
+   - **constants.ts**：定义命盘相关的常量，如地支顺序、宫位映射等
+
+3. **数据结构优化**：
+   - 设计更合理的数据结构，更好地表示命盘信息
+   - 优化宫位数据的传递和处理方式
+   - 使用TypeScript接口定义数据结构，提高代码的类型安全性
+
+4. **样式优化**：
+   - 使用Tailwind CSS实现命盘的样式，提高样式的可维护性
+   - 确保命盘在不同屏幕尺寸下都能正确显示，响应式设计
+   - 支持深色/浅色模式，确保在两种模式下都有良好的视觉效果
+
+5. **代码示例**：
+   ```tsx
+   // ZiweiChart组件核心代码
+   export default function ZiweiChart(props: ZiweiChartProps) {
+     const { ziweiData } = props;
+     if (!ziweiData || !ziweiData.astrolabe) return <div>暂无命盘数据</div>;
+
+     const { astrolabe, horoscope } = ziweiData;
+     const palaces = astrolabe.palaces || [];
+
+     return React.createElement(
+       'div',
+       {
+         className: 'w-[90%] aspect-square md:aspect-auto md:h-[640px] grid grid-cols-4 grid-rows-4 gap-[1px] bg-gray-800 border-2 border-gray-800 mx-auto'
+       },
+       EARTHLY_BRANCHES.map((branch) => {
+         const palaceData = palaces.find((p: any) => p.earthlyBranch === branch);
+         return React.createElement(
+           'div',
+           {
+             key: branch,
+             className: `${GRID_MAPPING[branch]} bg-white relative`
+           },
+           React.createElement(PalaceCell, {
+             palace: palaceData,
+             horoscope: horoscope
+           })
+         );
+       }),
+       React.createElement(
+         'div',
+         {
+           className: 'col-start-2 col-span-2 row-start-2 row-span-2 bg-[#f8f9fa] relative z-10'
+         },
+         React.createElement(CenterInfo, {
+           astrolabe: astrolabe,
+           horoscope: horoscope
+         })
+       )
+     );
+   }
+   ```
+
+### 测试结果
+- 命盘渲染正常，所有宫位信息显示正确
+- 命盘在不同屏幕尺寸下都能正确显示
+- 命盘在深色/浅色模式下都有良好的视觉效果
+- 命盘的布局和样式符合预期
+- 系统稳定性提高，不再依赖外部库
+
+### 相关文件更改
+- `src/components/ZiweiChart/index.tsx`（新建）：实现命盘的整体布局
+- `src/components/ZiweiChart/PalaceCell.tsx`（新建）：实现单个宫位的渲染
+- `src/components/ZiweiChart/CenterInfo.tsx`（新建）：实现命盘中心信息的显示
+- `src/components/ZiweiChart/constants.ts`（新建）：定义命盘相关的常量
+
+### 技术改进
+- 提高了系统的稳定性和可维护性，不再依赖外部库
+- 实现了更灵活的命盘渲染逻辑，便于后续扩展和定制
+- 使用Tailwind CSS实现样式，提高了样式的可维护性
+- 支持响应式设计，确保命盘在不同屏幕尺寸下都能正确显示
+- 使用TypeScript接口定义数据结构，提高了代码的类型安全性
+
+## 2026-02-23 身宫和来因宫视觉标识
+
+### 功能描述
+- 在命盘上增加身宫和来因宫的视觉标识，提高命盘可读性，使命理分析师能够快速识别这两个重要宫位
+
+### 技术实现
+1. **身宫标识**：
+   - 在`PalaceCellProps`接口中添加`earthlyBranchOfBodyPalace`字段
+   - 在`ZiweiChart`组件中从`astrolabe.earthlyBranchOfBodyPalace`获取身宫所在地支
+   - 在`PalaceCell`组件中添加`isBodyPalace`判断：`palace.earthlyBranch === earthlyBranchOfBodyPalace`
+   - 在宫位名称旁边添加绿色的[身宫]标签，使用`bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300`确保在两种模式下都清晰可见
+
+2. **来因宫标识**：
+   - 在`PalaceCellProps`接口中添加`birthYearStem`字段
+   - 在`ZiweiChart`组件中从`astrolabe.chineseDate`提取出生年干（如"戊寅年"的"戊"）
+   - 在`PalaceCell`组件中添加`isOriginPalace`判断：`palace.heavenlyStem === birthYearStem`
+   - 在宫位右上角添加红底白字[来因]标签，使用`bg-red-600 text-white`确保在两种模式下都清晰可见
+
+3. **代码示例**：
+   ```tsx
+   // PalaceCell组件中身宫和来因宫的判断逻辑
+   export default function PalaceCell({ palace, horoscope, earthlyBranchOfBodyPalace, birthYearStem }: PalaceCellProps) {
+     if (!palace) return null;
+
+     // 判断是否为身宫
+     const isBodyPalace = palace.earthlyBranch === earthlyBranchOfBodyPalace;
+     
+     // 判断是否为来因宫
+     const isOriginPalace = palace.heavenlyStem === birthYearStem;
+
+     return (
+       <div className={`w-full h-full p-1.5 flex flex-col justify-between
+         ${isCurrentDecadal ? 'ring-2 ring-blue-500 bg-blue-50' : ''}
+         ${isCurrentYearly ? 'ring-2 ring-red-500 bg-red-50' : ''}
+       `}>
+         {/* 其他代码 */}
+         
+         {/* 底部：基石区 (宫名、干支、大限) */}
+         <div className="border-t border-dashed border-gray-300 pt-1 mt-auto flex justify-between items-end">
+           <div className="flex flex-col">
+             {/* 大限岁数 */}
+             <span className="text-[10px] text-gray-500">
+               {palace.decadal?.range?.[0]}~{palace.decadal?.range?.[1]}
+             </span>
+             {/* 宫名 */}
+             <div className="flex items-center gap-1">
+               <span className="text-sm font-bold text-red-700">{palace.name}</span>
+               {/* 身宫标识 */}
+               {isBodyPalace && (
+                 <span className="text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 px-1 py-0.5 rounded">
+                   [身宫]
+                 </span>
+               )}
+             </div>
+           </div>
+           {/* 干支 */}
+           <div className="flex flex-col items-end">
+             {/* 来因宫标识 */}
+             {isOriginPalace && (
+               <span className="text-xs bg-red-600 text-white px-1 py-0.5 rounded mb-1">
+                 [来因]
+               </span>
+             )}
+             <span className="text-lg font-bold text-blue-800">
+               {palace.heavenlyStem}{palace.earthlyBranch}
+             </span>
+           </div>
+         </div>
+       </div>
+     );
+   }
+   ```
+
+### 测试结果
+- 身宫标识正确显示在对应宫位的名称旁边，绿色标签清晰可见
+- 来因宫标识正确显示在对应宫位的右上角，红底白字醒目
+- 在深色/浅色模式下，两个标识都清晰可见
+- 标识不破坏现有的宫位内部布局，与其他元素和谐共存
+
+### 相关文件更改
+- `src/components/ZiweiChart/PalaceCell.tsx`：
+  - 在`PalaceCellProps`接口中添加`earthlyBranchOfBodyPalace`和`birthYearStem`字段
+  - 添加`isBodyPalace`和`isOriginPalace`判断逻辑
+  - 在宫位名称旁边添加身宫标识
+  - 在宫位右上角添加来因宫标识
+- `src/components/ZiweiChart/index.tsx`：
+  - 从`astrolabe`中提取身宫地支和出生年干
+  - 将这些数据作为props传递给`PalaceCell`组件
+
+### 技术改进
+- 提高了命盘的可读性，使命理分析师能够快速识别身宫和来因宫
+- 实现了深色/浅色模式的支持，确保在不同环境下都有良好的显示效果
+- 优化了标识的位置和样式，不破坏现有的宫位布局
+- 使用TypeScript接口定义数据结构，提高了代码的类型安全性
+
+## 2026-02-23 大限与流年四化动态渲染架构
+
+### 功能描述
+- 实现大限与流年四化的动态渲染，无需每次切换年份都请求后端计算，提高用户体验和系统性能
+
+### 技术实现
+1. **四化反查映射**：
+   - 创建`SIHUA_TABLE`静态映射表，实现天干到四化的映射（如"甲" -> { 禄: "廉贞", 权: "破军", 科: "武曲", 忌: "太阳" }）
+   - 实现`getMutagensByStem`函数，根据天干获取四化星
+   - 实现`getDynamicSiHua`函数，根据星曜名称和天干获取四化状态，用于反查
+
+2. **数据传递链路**：
+   - 在`ZiweiChart`组件中从`horoscope`提取大限天干和流年天干
+   - 在`PalaceCellProps`接口中添加`decadalStem`和`yearlyStem`字段
+   - 将这些数据作为props传递给`PalaceCell`组件
+
+3. **动态四化引擎**：
+   - 在`PalaceCell`组件中，为每个主星计算三种四化状态：
+     1. `birthSiHua`：本命生年四化（后端直接下发）
+     2. `decadalSiHua`：动态大限四化（前端通过`getDynamicSiHua`函数推算）
+     3. `yearlySiHua`：动态流年四化（前端通过`getDynamicSiHua`函数推算）
+
+4. **UI视觉渲染**：
+   - 生年四化：使用黄底红字标签 `生禄`，样式为`bg-yellow-200 dark:bg-yellow-800 text-red-600 dark:text-red-300`
+   - 大限四化：使用蓝底白字/蓝字标签 `限禄`，样式为`bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300`
+   - 流年四化：使用紫/粉底白字标签 `流禄`，样式为`bg-fuchsia-100 dark:bg-fuchsia-900 text-fuchsia-700 dark:text-fuchsia-300`，并添加`animate-pulse`动画效果
+
+5. **代码示例**：
+   ```typescript
+   // sihua.ts核心代码
+   export const SIHUA_TABLE = {
+     '甲': { 禄: '廉贞', 权: '破军', 科: '武曲', 忌: '太阳' },
+     '乙': { 禄: '天机', 权: '天梁', 科: '紫微', 忌: '太阴' },
+     '丙': { 禄: '天同', 权: '天机', 科: '文昌', 忌: '廉贞' },
+     '丁': { 禄: '太阴', 权: '天同', 科: '天机', 忌: '巨门' },
+     '戊': { 禄: '贪狼', 权: '太阴', 科: '右弼', 忌: '天机' },
+     '己': { 禄: '武曲', 权: '贪狼', 科: '天梁', 忌: '紫微' },
+     '庚': { 禄: '太阳', 权: '武曲', 科: '太阴', 忌: '天同' },
+     '辛': { 禄: '巨门', 权: '太阳', 科: '文曲', 忌: '文昌' },
+     '壬': { 禄: '天梁', 权: '紫微', 科: '左辅', 忌: '武曲' },
+     '癸': { 禄: '破军', 权: '巨门', 科: '太阴', 忌: '贪狼' }
+   };
+
+   export function getDynamicSiHua(starName: string, stem?: string): string | null {
+     if (!stem) return null;
+     
+     const sihuaMap = getMutagensByStem(stem);
+     
+     if (sihuaMap['禄'] === starName) return '禄';
+     if (sihuaMap['权'] === starName) return '权';
+     if (sihuaMap['科'] === starName) return '科';
+     if (sihuaMap['忌'] === starName) return '忌';
+     
+     return null;
+   }
+   ```
+
+   ```tsx
+   // PalaceCell组件中四化渲染核心代码
+   {palace.majorStars?.map((star: any) => {
+     // 1. 本命生年四化 (后端直接下发)
+     const birthSiHua = star.mutagen; // 如 '禄'
+     // 2. 动态大限四化 (前端推算)
+     const decadalSiHua = getDynamicSiHua(star.name, decadalStem);
+     // 3. 动态流年四化 (前端推算)
+     const yearlySiHua = getDynamicSiHua(star.name, yearlyStem);
+     
+     return (
+       <div key={star.name} className="flex items-center flex-wrap gap-1">
+         <span className="text-red-700 font-bold text-lg leading-tight">{star.name}</span>
+         {/* 亮度 */}
+         {star.brightness && <span className="text-xs text-gray-500">{star.brightness}</span>}
+         
+         {/* 视觉层：用不同的底色区分三代四化，形成视觉阶梯 */}
+         
+         {/* 生年四化：经典黄底红字 */}
+         {birthSiHua && (
+           <span className="text-xs bg-yellow-200 dark:bg-yellow-800 text-red-600 dark:text-red-300 px-0.5 rounded border border-red-200">
+             生{birthSiHua}
+           </span>
+         )}
+
+         {/* 大限四化：沉稳蓝底白字/蓝字 */}
+         {decadalSiHua && (
+           <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-0.5 rounded border border-blue-200">
+             限{decadalSiHua}
+           </span>
+         )}
+
+         {/* 流年四化：醒目紫/粉底白字（流年最重，需要最吸睛） */}
+         {yearlySiHua && (
+           <span className="text-xs bg-fuchsia-100 dark:bg-fuchsia-900 text-fuchsia-700 dark:text-fuchsia-300 px-0.5 rounded border border-fuchsia-200 animate-pulse">
+             流{yearlySiHua}
+           </span>
+         )}
+       </div>
+     );
+   })}
+   ```
+
+### 测试结果
+- 大限四化和流年四化能够根据选择的年份动态计算和显示
+- 不同四化状态使用不同颜色标签区分，清晰可见
+- 在深色/浅色模式下，所有四化标签都能正确显示
+- 切换年份时，四化标签能够瞬间更新，无需等待后端响应
+- 性能优化效果明显，用户体验流畅
+
+### 相关文件更改
+- `src/lib/sihua.ts`（新建）：
+  - 创建`SIHUA_TABLE`静态映射表
+  - 实现`getMutagensByStem`和`getDynamicSiHua`函数
+- `src/components/ZiweiChart/PalaceCell.tsx`：
+  - 在`PalaceCellProps`接口中添加`decadalStem`和`yearlyStem`字段
+  - 实现动态四化渲染逻辑
+  - 添加四化标签的样式
+- `src/components/ZiweiChart/index.tsx`：
+  - 从`horoscope`提取大限天干和流年天干
+  - 将这些数据作为props传递给`PalaceCell`组件
+
+### 技术改进
+- 实现了前端动态四化计算，无需每次切换年份都请求后端，提高了系统性能和用户体验
+- 使用静态映射表和反查机制，确保四化计算的准确性和效率
+- 优化了UI视觉效果，使用不同颜色标签区分不同类型的四化，提高了命盘的可读性
+- 使用TypeScript接口定义数据结构，提高了代码的类型安全性
+- 实现了响应式设计，确保在不同屏幕尺寸和模式下都有良好的显示效果

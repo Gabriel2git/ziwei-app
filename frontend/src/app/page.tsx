@@ -431,8 +431,10 @@ export default function Home() {
                           horoscope: {
                             decadal: selectedDecadal 
                               ? ziweiData?.astrolabe?.palaces?.find((p: any) => p.earthlyBranch === selectedDecadal.branch) 
-                              : ziweiData?.astrolabe?.palaces?.find((p: any) => p.decadal?.range?.includes(nominalAge)),
-                            yearly: ziweiData?.astrolabe?.palaces?.find((p: any) => p.earthlyBranch === getEarthlyBranchByYear(selectedYear))
+                              : null,
+                            yearly: selectedYear 
+                              ? ziweiData?.astrolabe?.palaces?.find((p: any) => p.earthlyBranch === getEarthlyBranchByYear(selectedYear))
+                              : null
                           }
                         }}
                       />
@@ -459,9 +461,14 @@ export default function Home() {
                                     stem: palace.heavenlyStem,
                                     branch: palace.earthlyBranch
                                   };
-                                  setSelectedDecadal(decadalInfo);
-                                  const baseYear = getLunarBaseYear(birthData.birthday);
-                                  setSelectedYear(getGregorianYearByNominalAge(baseYear, decadalInfo.start));
+                                  // 实现点击切换逻辑：点击选择，再点击取消
+                                  if (selectedDecadal && selectedDecadal.start === decadalInfo.start) {
+                                    setSelectedDecadal(null);
+                                    setSelectedYear(null); // 取消大限时也取消流年
+                                  } else {
+                                    setSelectedDecadal(decadalInfo);
+                                    setSelectedYear(null); // 切换大限时也取消流年，确保流年宫位名称消除
+                                  }
                                 }}
                                 className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                                   selectedDecadal?.start === palace.decadal?.range?.[0] 
@@ -483,7 +490,14 @@ export default function Home() {
                               return (
                                 <button
                                   key={year}
-                                  onClick={() => setSelectedYear(year)}
+                                  onClick={() => {
+                                    // 实现点击切换逻辑：点击选择，再点击取消
+                                    if (selectedYear === year) {
+                                      setSelectedYear(null);
+                                    } else {
+                                      setSelectedYear(year);
+                                    }
+                                  }}
                                   className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                                     selectedYear === year 
                                       ? 'bg-red-500 text-white' 
