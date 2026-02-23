@@ -99,61 +99,24 @@ export function getLunarBaseYear(solarDateStr: string): number {
   
   try {
     // 使用chinese-lunar-calendar库计算精确的农历日期
-    const lunar = getLunar(year, month, day);
+    const lunar = getLunar(year, month, day) as any;
     
     // 获取农历年份（如"己卯年"）
     const lunarYearStr = lunar.lunarYear;
     
-    // 从农历年份字符串中提取数字部分
-    // 农历年份格式：天干地支年（如"己卯年"）
-    // 我们需要将其转换为对应的公历年份数字
-    
-    // 计算农历年份对应的公历年份
-    // 1. 先获取当年农历新年的公历日期
-    // 2. 比较出生日期和农历新年日期
-    // 3. 如果出生在农历新年之前，农历年份是前一年
-    // 4. 如果出生在农历新年之后，农历年份是当年
-    
     // 创建出生日期对象
     const birthDate = new Date(year, month - 1, day);
     
-    // 获取当年农历新年的公历日期
-    // 农历新年是农历正月初一，对应的公历日期
-    let springFestivalYear = year;
-    let springFestivalMonth = 2;
-    let springFestivalDay = 5;
-    
-    // 使用chinese-lunar-calendar库计算当年春节日期
-    // 尝试获取农历正月初一的公历日期
-    for (let d = 1; d <= 20; d++) {
-      const testLunar = getLunar(year, 2, d);
-      if (testLunar.lunarMonth === 1 && testLunar.lunarDay === 1) {
-        springFestivalMonth = 2;
-        springFestivalDay = d;
-        break;
-      }
-    }
-    
-    // 检查1月份
-    for (let d = 21; d <= 31; d++) {
-      const testLunar = getLunar(year, 1, d);
-      if (testLunar.lunarMonth === 1 && testLunar.lunarDay === 1) {
-        springFestivalMonth = 1;
-        springFestivalDay = d;
-        break;
-      }
-    }
-    
-    const springFestivalDate = new Date(year, springFestivalMonth - 1, springFestivalDay);
-    
-    // 比较出生日期和春节日期
+    // 计算农历基准年
     let lunarYear = year;
-    if (birthDate < springFestivalDate) {
+    
+    // 直接使用备用方法：如果农历月份是12，说明还没过春节，农历年份是前一年
+    if (lunar.lunarMonth === 12) {
       lunarYear = year - 1;
+      console.log(`使用农历月份判断计算的农历基准年: ${lunarYear}`);
     }
     
     console.log(`公历 ${solarDateStr} 对应的农历年份: ${lunarYear}（${lunarYearStr}）`);
-    console.log(`当年春节日期: ${springFestivalDate.toISOString().split('T')[0]}`);
     
     return lunarYear;
   } catch (error) {
