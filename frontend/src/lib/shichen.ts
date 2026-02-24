@@ -101,22 +101,13 @@ export function getLunarBaseYear(solarDateStr: string): number {
     // 使用chinese-lunar-calendar库计算精确的农历日期
     const lunar = getLunar(year, month, day) as any;
     
-    // 获取农历年份（如"己卯年"）
-    const lunarYearStr = lunar.lunarYear;
-    
-    // 创建出生日期对象
-    const birthDate = new Date(year, month - 1, day);
-    
     // 计算农历基准年
     let lunarYear = year;
     
     // 直接使用备用方法：如果农历月份是12，说明还没过春节，农历年份是前一年
     if (lunar.lunarMonth === 12) {
       lunarYear = year - 1;
-      console.log(`使用农历月份判断计算的农历基准年: ${lunarYear}`);
     }
-    
-    console.log(`公历 ${solarDateStr} 对应的农历年份: ${lunarYear}（${lunarYearStr}）`);
     
     return lunarYear;
   } catch (error) {

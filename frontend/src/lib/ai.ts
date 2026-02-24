@@ -241,8 +241,8 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
       .filter((palace: any) => palace.decadal && palace.decadal.range)
       .sort((a: any, b: any) => a.decadal.range[0] - b.decadal.range[0]);
     
-    // 生成每个大限的信息
-    decadalPalaces.forEach((palace: any, index: number) => {
+    // 生成每个大限的信息（只输出到第6大限为止）
+    decadalPalaces.slice(0, 6).forEach((palace: any, index: number) => {
       const decadal = palace.decadal;
       const [startAge, endAge] = decadal.range;
       const ganzhi = `${palace.heavenlyStem}${palace.earthlyBranch}`;
@@ -259,7 +259,8 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
         "武曲禄,贪狼权,天梁科,文曲忌",
         "太阳禄,武曲权,太阴科,天同忌",
         "巨门禄,太阳权,文曲科,文昌忌",
-        "天梁禄,紫微权,左辅科,武曲忌"
+        "天梁禄,紫微权,左辅科,武曲忌",
+        "破军禄,巨门权,太阴科,贪狼忌"
       ];
       const decadalMutagen = decadalMutagens[index % decadalMutagens.length];
       
@@ -273,23 +274,23 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
         const year = startYear + i;
         const age = startAge + i;
         
-        // 模拟流年干支（实际需要从命盘数据中获取）
-        const yearGanzhiMap: Record<number, string> = {
-          2005: "乙酉", 2006: "丙戌", 2007: "丁亥", 2008: "戊子", 2009: "己丑",
-          2010: "庚寅", 2011: "辛卯", 2012: "壬辰", 2013: "癸巳", 2014: "甲午",
-          2015: "乙未", 2016: "丙申", 2017: "丁酉", 2018: "戊戌", 2019: "己亥",
-          2020: "庚子", 2021: "辛丑", 2022: "壬寅", 2023: "癸卯", 2024: "甲辰"
-        };
-        const yearGanzhi = yearGanzhiMap[year] || "未知";
+        // 计算流年干支
+        const heavenlyStems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+        const earthlyBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
         
-        // 模拟命宫干支（实际需要从命盘数据中获取）
-        const palaceGanzhiMap: Record<number, string> = {
-          2005: "乙酉", 2006: "丙戌", 2007: "丁亥", 2008: "戊子", 2009: "己丑",
-          2010: "戊寅", 2011: "己卯", 2012: "庚辰", 2013: "辛巳", 2014: "壬午",
-          2015: "癸未", 2016: "甲申", 2017: "乙酉", 2018: "丙戌", 2019: "丁亥",
-          2020: "戊子", 2021: "己丑", 2022: "戊寅", 2023: "己卯", 2024: "庚辰"
-        };
-        const palaceGanzhi = palaceGanzhiMap[year] || "未知";
+        // 2024年是甲辰年，以此为基准计算
+        const baseYear = 2024;
+        const yearDiff = year - baseYear;
+        
+        const stemIndex = (yearDiff + 0) % 10; // 2024年是甲（索引0）
+        const branchIndex = (yearDiff + 4) % 12; // 2024年是辰（索引4）
+        
+        const yearGanzhi = `${heavenlyStems[stemIndex < 0 ? stemIndex + 10 : stemIndex]}${earthlyBranches[branchIndex < 0 ? branchIndex + 12 : branchIndex]}`;
+        
+        // 简化的命宫干支计算（基于流年地支的前一个地支）
+        const palaceBranchIndex = (branchIndex - 1 + 12) % 12;
+        const palaceStemIndex = (stemIndex - 1 + 10) % 10;
+        const palaceGanzhi = `${heavenlyStems[palaceStemIndex]}${earthlyBranches[palaceBranchIndex]}`;
         
         // 模拟流年四化信息（实际需要从命盘数据中获取）
         const yearlyMutagens = [

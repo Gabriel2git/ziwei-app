@@ -111,6 +111,8 @@ export default function PalaceCell({ palace, horoscope, earthlyBranchOfBodyPalac
             return (
               <div key={star.name} className="flex items-center flex-wrap gap-1">
                 <span className="text-blue-700 text-md leading-tight">{star.name}</span>
+                {/* 亮度 */}
+                {star.brightness && <span className="text-xs text-gray-500">{star.brightness}</span>}
                 
                 {/* 视觉层：用不同的底色区分三代四化，形成视觉阶梯 */}
                 
@@ -144,7 +146,11 @@ export default function PalaceCell({ palace, horoscope, earthlyBranchOfBodyPalac
       <div className="flex flex-wrap gap-1 mt-1 opacity-70 text-xs">
         {/* iztro data: adjectiveStars 杂曜 */}
         {palace.adjectiveStars?.map((star: any) => (
-          <span key={star.name} className="text-gray-600">{star.name}</span>
+          <div key={star.name} className="flex items-center flex-wrap gap-1">
+            <span className="text-gray-600">{star.name}</span>
+            {/* 亮度 */}
+            {star.brightness && <span className="text-xs text-gray-500">{star.brightness}</span>}
+          </div>
         ))}
         {/* iztro data: 长生十二神、岁前十二神等 */}
         {palace.changsheng12 && <span className="text-purple-600">{palace.changsheng12}</span>}
