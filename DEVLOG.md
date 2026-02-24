@@ -453,11 +453,7 @@
      return (
        <div key={star.name} className="flex items-center flex-wrap gap-1">
          <span className="text-red-700 font-bold text-lg leading-tight">{star.name}</span>
-         {/* 亮度 */}
-         {star.brightness && <span className="text-xs text-gray-500">{star.brightness}</span>}
-         
-         {/* 视觉层：用不同的底色区分三代四化，形成视觉阶梯 */}
-         
+
          {/* 生年四化：经典黄底红字 */}
          {birthSiHua && (
            <span className="text-xs bg-yellow-200 dark:bg-yellow-800 text-red-600 dark:text-red-300 px-0.5 rounded border border-red-200">
@@ -507,4 +503,180 @@
 - 使用静态映射表和反查机制，确保四化计算的准确性和效率
 - 优化了UI视觉效果，使用不同颜色标签区分不同类型的四化，提高了命盘的可读性
 - 使用TypeScript接口定义数据结构，提高了代码的类型安全性
+- 实现了响应式设计，确保在不同屏幕尺寸和模式下都有良好的显示效果
+
+## 2026-02-25 项目开发规范制定与页面组件拆分重构
+
+### 功能描述
+- 制定了详细的项目开发规范，涵盖框架版本、测试要求、AI开发规范等内容
+- 对主页面进行了组件拆分重构，将原本庞大的 `page.tsx` 文件拆分为多个独立的组件和自定义 Hook
+
+### 技术实现
+1. **项目开发规范制定**：
+   - 创建了 `project_rules.md` 文件，明确了项目的技术栈和开发规范
+   - 规定了前端框架为 Next.js 14.1.0 + React 18 + TypeScript
+   - 确定了样式解决方案为 Tailwind CSS 3.3.0
+   - 明确了农历计算使用 chinese-lunar-calendar 库
+   - 确定了核心库为 iztro 库（提供星曜数据和命盘计算）
+   - 规定了测试框架为 Jest + React Testing Library，测试覆盖率不低于80%
+   - 设定了代码规范，包括命名约定、类型定义、组件化等要求
+
+2. **页面组件拆分**：
+   - 将 `page.tsx` 拆分为多个独立组件和 Hook
+   - 创建了 `useZiweiData.ts` 自定义 Hook，负责管理紫微斗数数据的获取和状态
+   - 创建了 `useAIChat.ts` 自定义 Hook，负责管理 AI 聊天功能和消息状态
+   - 创建了 `Sidebar` 组件，负责导航和出生数据输入功能
+   - 创建了 `ChartView` 组件，负责显示紫微斗数图表
+   - 创建了 `AIChat` 组件，负责 AI 聊天界面和功能
+
+3. **代码结构优化**：
+   - 将状态管理和业务逻辑从页面组件中分离出来
+   - 实现了更清晰的关注点分离，提高代码可维护性
+   - 通过自定义 Hook 重用状态逻辑，减少重复代码
+   - 通过独立组件提高 UI 的模块化程度
+
+4. **代码示例**：
+   ```typescript
+   // useZiweiData.ts 核心代码
+   export function useZiweiData() {
+     const [ziweiData, setZiweiData] = useState<ZiweiData | null>(null);
+     const [isRefreshingData, setIsRefreshingData] = useState(false);
+     const [horoscopeYear, setHoroscopeYear] = useState(new Date().getFullYear());
+
+     const fetchZiweiData = async (data: BirthData, targetYear: number): Promise<ZiweiData> => {
+       const shichenIndex = getShichenIndexFromHour(data.birthTime);
+       const response = await fetch(`${API_BASE_URL}/api/ziwei`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
+           birthday: data.birthday,
+           hourIndex: shichenIndex,
+           minute: data.birthMinute,
+           gender: data.gender,
+           longitude: data.longitude,
+           targetYear: targetYear
+         }),
+       });
+
+       if (!response.ok) throw new Error(`API 请求失败: ${response.statusText}`);
+       
+       const realZiweiData = await response.json();
+       realZiweiData.originalTime = { hour: data.birthTime, minute: data.birthMinute };
+       return realZiweiData;
+     };
+     
+     // 其他方法实现...
+   }
+   ```
+
+   ```tsx
+   // page.tsx 现在的结构
+   export default function Home() {
+     const [currentPage, setCurrentPage] = useState<'命盘显示' | 'AI 命理师'>('命盘显示');
+     const [selectedModel, setSelectedModel] = useState(AI_MODELS[0]);
+     const [darkMode, setDarkMode] = useState(false);
+     // ... 其他状态
+
+     const { ziweiData, isRefreshingData, horoscopeYear, loadZiweiData, updateHoroscopeYear } = useZiweiData();
+     const {
+       messages,
+       inputMessage,
+       setInputMessage,
+       isLoading,
+       debugPrompt,
+       setDebugPrompt,
+       messagesEndRef,
+       messagesContainerRef,
+       initializeChat,
+       updateChatForHoroscope,
+       sendMessage,
+       saveChatHistory,
+       loadChatHistory
+     } = useAIChat(ziweiData, horoscopeYear);
+     const { savedCases, saveCase, deleteCase } = useSavedCases();
+
+     return (
+       <div className="h-screen overflow-hidden bg-gradient-to-br from-purple-50 to-blue-50 dark:from-[#0f1a1a] dark:to-[#0a1414]">
+         <div className="flex h-full">
+           <Sidebar
+             currentPage={currentPage}
+             setCurrentPage={setCurrentPage}
+             selectedModel={selectedModel}
+             setSelectedModel={setSelectedModel}
+             darkMode={darkMode}
+             toggleDarkMode={toggleDarkMode}
+             onDataLoaded={handleDataLoaded}
+           />
+           <main className="flex-1 p-6 overflow-hidden">
+             {currentPage === '命盘显示' ? (
+               <ChartView
+                 ziweiData={ziweiData}
+                 birthData={birthData}
+                 selectedDecadal={selectedDecadal}
+                 setSelectedDecadal={setSelectedDecadal}
+                 selectedYear={selectedYear}
+                 setSelectedYear={setSelectedYear}
+                 savedCases={savedCases}
+                 showSavedCases={showSavedCases}
+                 setShowSavedCases={setShowSavedCases}
+                 onSaveCase={handleSaveCurrentCase}
+                 onLoadCase={handleLoadSavedCase}
+                 onDeleteCase={handleDeleteSavedCase}
+               />
+             ) : (
+               <AIChat
+                 messages={messages}
+                 inputMessage={inputMessage}
+                 setInputMessage={setInputMessage}
+                 isLoading={isLoading}
+                 debugPrompt={debugPrompt}
+                 showDebug={showDebug}
+                 setShowDebug={setShowDebug}
+                 selectedModel={selectedModel}
+                 hasBirthData={hasBirthData}
+                 birthData={birthData}
+                 messagesEndRef={messagesEndRef}
+                 messagesContainerRef={messagesContainerRef}
+                 onSendMessage={() => sendMessage(selectedModel)}
+                 onKeyPress={handleKeyPress}
+                 onSaveHistory={() => saveChatHistory(birthData?.birthday || '', birthData?.gender || '')}
+                 onLoadHistory={loadChatHistory}
+               />
+             )}
+           </main>
+         </div>
+       </div>
+     );
+   }
+   ```
+
+### 测试结果
+- 项目开发规范已成功制定并记录在 `project_rules.md` 文件中
+- 页面组件拆分重构完成，原 668 行的 `page.tsx` 文件缩减至约 185 行
+- 各组件和 Hook 功能正常，应用运行稳定
+- 代码结构更加清晰，可维护性显著提升
+- 符合关注点分离原则，提高了代码的模块化程度
+
+### 相关文件更改
+- `.trae/rules/project_rules.md`（新建）：
+  - 制定了项目开发规范，包括框架版本、测试要求、AI开发规范、代码规范等
+- `frontend/src/hooks/useZiweiData.ts`（新建）：
+  - 实现了紫微斗数数据获取和管理的自定义 Hook
+- `frontend/src/hooks/useAIChat.ts`（新建）：
+  - 实现了 AI 聊天功能和消息状态管理的自定义 Hook
+- `frontend/src/components/Sidebar/index.tsx`（新建）：
+  - 实现了侧边栏组件，包含导航和出生数据输入功能
+- `frontend/src/components/ChartView/index.tsx`（新建）：
+  - 实现了命盘显示组件
+- `frontend/src/components/AIChat/index.tsx`（新建）：
+  - 实现了 AI 聊天界面组件
+- `frontend/src/app/page.tsx`：
+  - 重构为主页面，整合各组件和 Hook
+
+### 技术改进
+- 实现了更清晰的代码架构，通过组件拆分和 Hook 分离提高了可维护性
+- 制定了统一的开发规范，确保团队协作的一致性
+- 通过模块化设计提高了代码重用性
+- 优化了状态管理，将复杂的状态逻辑封装在专门的 Hook 中
+- 使用 TypeScript 接口定义数据结构，提高了代码的类型安全性
 - 实现了响应式设计，确保在不同屏幕尺寸和模式下都有良好的显示效果
