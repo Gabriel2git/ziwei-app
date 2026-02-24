@@ -53,7 +53,8 @@ export default function ChartView({
   setShowSavedCases,
   onSaveCase,
   onLoadCase,
-  onDeleteCase
+  onDeleteCase,
+  onTestAIPrompt
 }: ChartViewProps) {
   return (
     <div className="max-w-6xl mx-auto h-full overflow-y-auto">
