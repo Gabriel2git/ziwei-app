@@ -15,6 +15,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// API 基础 URL，从环境变量获取或使用默认值
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authCode, setAuthCode] = useState<string | null>(null);
@@ -41,7 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
-      const response = await fetch('/api/verify-code', {
+      const response = await fetch(`${API_BASE_URL}/api/verify-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
