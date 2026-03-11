@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Message, getDefaultSystemPrompt, generateMasterPrompt, getLLMResponse, parseZiweiToPrompt } from '@/lib/ai';
+import { Message, PersonaType, getDefaultSystemPrompt, generateMasterPrompt, getLLMResponse, parseZiweiToPrompt } from '@/lib/ai';
 
 interface ZiweiData {
   astrolabe: any;
@@ -16,6 +16,7 @@ export function useAIChat(ziweiData: ZiweiData | null, horoscopeYear: number) {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [debugPrompt, setDebugPrompt] = useState<string>('');
+  const [selectedPersona, setSelectedPersona] = useState<PersonaType>('companion');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -70,9 +71,9 @@ export function useAIChat(ziweiData: ZiweiData | null, horoscopeYear: number) {
     let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
     try {
-      console.log('生成系统提示词');
+      console.log('生成系统提示词, persona:', selectedPersona);
       const systemPrompt = ziweiData 
-        ? generateMasterPrompt(inputMessage, ziweiData, horoscopeYear)
+        ? generateMasterPrompt(inputMessage, ziweiData, horoscopeYear, selectedPersona)
         : getDefaultSystemPrompt();
 
       const dynamicMessages: Message[] = [
@@ -222,11 +223,14 @@ export function useAIChat(ziweiData: ZiweiData | null, horoscopeYear: number) {
 
   return {
     messages,
+    setMessages,
     inputMessage,
     setInputMessage,
     isLoading,
     debugPrompt,
     setDebugPrompt,
+    selectedPersona,
+    setSelectedPersona,
     messagesEndRef,
     messagesContainerRef,
     initializeChat,

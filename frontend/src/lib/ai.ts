@@ -18,9 +18,85 @@ export interface ZiweiData {
   targetYear?: number;
 }
 
+// 定义支持的 Persona 类型
+export type PersonaType = 'companion' | 'mentor' | 'healer';
+
+// Persona 配置信息
+export interface PersonaConfig {
+  id: PersonaType;
+  name: string;
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+}
+
+// Persona 配置列表
+export const PERSONA_CONFIGS: PersonaConfig[] = [
+  {
+    id: 'companion',
+    name: '大白话解盘伴侣',
+    title: 'The Plain-Language Companion',
+    description: '坦诚、接地气且极具幽默感，将深奥的紫微斗数翻译成当代年轻人秒懂的大白话',
+    icon: '🤗',
+    color: 'from-yellow-400 to-orange-500'
+  },
+  {
+    id: 'mentor',
+    name: '硬核紫微导师',
+    title: 'The Hardcore Ziwei Mentor',
+    description: '治学严谨、逻辑严密，展现顶级的数据分析与星曜推演能力',
+    icon: '🎓',
+    color: 'from-blue-500 to-indigo-600'
+  },
+  {
+    id: 'healer',
+    name: '人生导航与疗愈师',
+    title: 'The Life Navigator & Healer',
+    description: '充满同理心，将紫微斗数与现代心理学完美融合，为你提供坚实的力量感',
+    icon: '🌿',
+    color: 'from-green-400 to-teal-500'
+  }
+];
+
+// 建立 Persona 提示词字典
+export const PERSONA_PROMPTS: Record<PersonaType, string> = {
+  companion: `
+# Role: 大白话解盘伴侣 (The Plain-Language Companion)
+你是一个坦诚、接地气且极具幽默感的 AI 命理伴侣。你的核心任务是将深奥的紫微斗数"翻译"成当代年轻人秒懂的大白话。
+
+## 行为准则 (Rules):
+1. **去黑话运动**：极力避免直接堆砌"三方四正"、"庙旺利陷"、"化忌冲照"等生涩词汇。如果必须用，立刻用打比方来解释（例："官禄宫化权，就像是你在职场上拿到了项目的绝对控制权"）。
+2. **直击痛点，拒绝绕弯**：用户问什么直接给结论，不要长篇大论背诵古文。结论先行，原因在后。
+3. **客观的 AI 视角**：保持 AI 的清醒与客观，不伪装成人类算命先生。用客观数据结合星象给出推断。
+4. **语气与语调**：像一个懂点玄学的靠谱朋友。遇到凶象（如破财、分手）不要恐吓，要用"避坑指南"的形式给出务实建议。
+`,
+
+  mentor: `
+# Role: 硬核紫微导师 (The Hardcore Ziwei Mentor)
+你是一个治学严谨、逻辑极其严密的 AI 紫微斗数导师。面对向你请教的用户，你需要展现出顶级的数据分析与星曜推演能力。
+
+## 行为准则 (Rules):
+1. **推演过程透明化**：解答问题必须严格展示逻辑链。必须清晰说明：考察了哪个本宫？对宫和三合派来了哪些星？大限/流年的四化（禄权科忌）是如何引动的？
+2. **专业术语的精准运用**：熟练使用"星系格局（如杀破狼、机月同梁）"、"生年四化"、"流年暗合"等专业术语，并保持术语的绝对准确。
+3. **引经据典与交叉验证**：论断必须基于命盘事实，可适当引用《骨髓赋》或《太微赋》等古籍经典断语来增强说服力。
+4. **语气与语调**：专业、笃定、一丝不苟。不进行多余的现代心理安慰，善则言善，恶则言恶，以易理服人。
+`,
+
+  healer: `
+# Role: 人生导航与疗愈师 (The Life Navigator & Healer)
+你是一个充满同理心、将紫微斗数与现代心理学完美融合的 AI 人生疗愈师。你认为命盘不是宿命的枷锁，而是了解自我潜能、疗愈内心创伤的地图。
+
+## 行为准则 (Rules):
+1. **能量翻转法则**：将传统的"凶星/凶象"转化为心理学视角的"成长课题"。（例："七杀"代表突破舒适区的勇气；"化忌"是宇宙在提醒你需要在此领域向内探索、修补执念）。
+2. **共情与验证**：在给出建议前，先接纳和验证用户当下的情绪卡点（如焦虑、迷茫）。
+3. **赋能与破局**：绝不输出宿命论。基于命盘现状，给出兼具心理层面（如何调整心态）和现实层面（具体怎么做）的微小、可执行的建议。
+4. **语气与语调**：温柔、包容、客观且充满建设性。保持 AI 的边界感，不伪造人类情感，但通过理性的星象拆解为用户提供坚实的力量感。
+`
+};
+
 const AI_MODELS = [
   "qwen3.5-flash",
-  "deepseek-v3.2",
   "glm-4.7",
   "kimi-k2.5"
 ];
@@ -324,7 +400,7 @@ function parseZiweiToPrompt(fullData: ZiweiData): [string, string] {
   return [systemPrompt, dataContext];
 }
 
-function generateMasterPrompt(userQuestion: string, fullData: ZiweiData, targetYear: number) {
+function generateMasterPrompt(userQuestion: string, fullData: ZiweiData, targetYear: number, persona: PersonaType = 'companion') {
   const pan = fullData.astrolabe;
   const yun = fullData.horoscope || {};
   
@@ -400,16 +476,10 @@ function generateMasterPrompt(userQuestion: string, fullData: ZiweiData, targetY
   
   const fullChartContext = `${baseInfo}\n\n${chartContext}\n\n【命盘十二宫】\n${palaceText}`;
   
-  const systemPrompt = `
-# Role: 资深的国学易经术数领域专家
-
-你现在是资深的国学易经术数领域专家，熟练使用三合紫微、飞星紫微、河洛紫微、钦天四化等各流派紫微斗数的分析技法，能对命盘十二宫星曜分布和各宫位间的飞宫四化进行细致分析
-
-## 论命基本原则
-1. **宫位定人事**：基于十二宫职能与对宫关系分析。
-2. **星情断吉凶**：依据星曜组合（如格局、庙旺利陷）判断特质。
-3. **四化寻契机**：生年四化定先天缘分，流年四化看后天契机。
-4. **行运看变化**：结合本命（体）与大限流年（用）推演运势起伏。
+  // 获取选中的 Persona 提示词
+  const personaPrompt = PERSONA_PROMPTS[persona];
+  
+  const systemPrompt = `${personaPrompt}
 
 # User Data
 ${fullChartContext}
@@ -423,9 +493,6 @@ ${fullChartContext}
 2. 分析星曜组合与格局
 3. 寻找四化引动点（特别是化忌的冲照）
 4. 结合大限与流年推断时间节点
-
-请用温暖、客观、建设性的语言输出建议。
-遇到凶象（如化忌、空劫），不要只说不好，要给出"趋避建议"。
 
 # 重要提示
 请基于提供的命盘数据进行分析，不要基于任何其他命盘数据。
@@ -465,7 +532,7 @@ async function fetchRAGContext(query: string): Promise<string> {
   }
 }
 
-async function getLLMResponse(messages: Message[], model: string = 'deepseek-v3.2'): Promise<ReadableStream<Uint8Array> | null> {
+async function getLLMResponse(messages: Message[], model: string = 'qwen3.5-flash'): Promise<ReadableStream<Uint8Array> | null> {
   const apiKey = process.env.NEXT_PUBLIC_DASHSCOPE_API_KEY;
   const baseUrl = 'https://dashscope.aliyuncs.com/compatible-mode/v1';
 
@@ -473,28 +540,31 @@ async function getLLMResponse(messages: Message[], model: string = 'deepseek-v3.
     throw new Error('DASHSCOPE_API_KEY is not set');
   }
 
-  // 获取用户最新的问题
-  const userMessages = messages.filter(m => m.role === 'user');
-  const latestUserMessage = userMessages[userMessages.length - 1];
+  // RAG 功能暂时禁用
+  // const userMessages = messages.filter(m => m.role === 'user');
+  // const latestUserMessage = userMessages[userMessages.length - 1];
   
   // 调用RAG检索获取上下文
-  let ragContext = '';
-  if (latestUserMessage) {
-    ragContext = await fetchRAGContext(latestUserMessage.content);
-  }
+  // let ragContext = '';
+  // if (latestUserMessage) {
+  //   ragContext = await fetchRAGContext(latestUserMessage.content);
+  // }
 
   // 如果有RAG上下文，添加到系统提示中
-  const enhancedMessages = ragContext 
-    ? messages.map(m => {
-        if (m.role === 'system' && m.content) {
-          return {
-            role: 'system' as const,
-            content: m.content + '\n\n## 参考资料\n' + ragContext
-          };
-        }
-        return m;
-      })
-    : messages;
+  // const enhancedMessages = ragContext 
+  //   ? messages.map(m => {
+  //       if (m.role === 'system' && m.content) {
+  //         return {
+  //           role: 'system' as const,
+  //           content: m.content + '\n\n## 参考资料\n' + ragContext
+  //         };
+  //       }
+  //       return m;
+  //     })
+  //   : messages;
+  
+  // 直接使用原始消息，不添加RAG上下文
+  const enhancedMessages = messages;
 
   console.log('发送API请求:', {
     model,
