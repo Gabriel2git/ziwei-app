@@ -9,6 +9,12 @@ if (process.env.NODE_ENV !== 'production') {
 
 const port = 3001;
 
+// 调试日志：输出环境变量
+console.log('=== 服务器启动 ===');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('AUTH_CODE 是否存在:', !!process.env.AUTH_CODE);
+console.log('AUTH_CODE 值:', process.env.AUTH_CODE);
+
 // 初始化检索服务
 const retrievalService = new RetrievalService();
 retrievalService.initialize().catch(console.error);
@@ -192,7 +198,13 @@ const server = http.createServer(async (req, res) => {
       const body = await parseRequestBody(req);
       const { code } = body;
       
+      console.log('收到验证请求');
+      console.log('用户输入的 code:', code);
+      console.log('环境变量 AUTH_CODE:', process.env.AUTH_CODE);
+      console.log('是否匹配:', code === process.env.AUTH_CODE);
+      
       if (!code) {
+        console.log('错误: 未输入邀请码');
         res.statusCode = 400;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ error: '请输入邀请码' }));
@@ -201,10 +213,12 @@ const server = http.createServer(async (req, res) => {
 
       // 验证邀请码
       if (code === process.env.AUTH_CODE) {
+        console.log('验证成功');
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ success: true, message: '验证成功' }));
       } else {
+        console.log('验证失败: 邀请码不匹配');
         res.statusCode = 401;
         res.setHeader('Content-Type', 'application/json');
         res.end(JSON.stringify({ error: '邀请码错误' }));
