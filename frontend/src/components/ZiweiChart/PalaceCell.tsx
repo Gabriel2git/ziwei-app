@@ -50,8 +50,8 @@ export default function PalaceCell({ palace, horoscope, earthlyBranchOfBodyPalac
 
   return (
     <div className={`w-full h-full p-0.5 sm:p-1.5 flex flex-col justify-between border border-gray-600 dark:border-gray-500 bg-white dark:bg-[#1a2a2a]
-      ${isCurrentDecadal ? 'ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/30' : ''}
-      ${isCurrentYearly ? 'ring-2 ring-red-500 bg-red-50 dark:bg-red-900/30' : ''}
+      ${isCurrentDecadal ? 'border-2 border-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)] bg-blue-50 dark:bg-blue-900/30' : ''}
+      ${isCurrentYearly ? 'border-2 border-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)] bg-red-50 dark:bg-red-900/30' : ''}
     `}>
       
       {/* 顶部：星曜区 (权重最高) */}

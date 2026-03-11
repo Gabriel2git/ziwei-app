@@ -94,7 +94,12 @@ export default function Sidebar({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <BirthForm onDataLoaded={onDataLoaded} />
+        <BirthForm
+          onDataLoaded={(data) => {
+            onDataLoaded(data);
+            setCurrentPage('命盘显示'); // 自动跳转到命盘页面
+          }}
+        />
       </div>
     </aside>
   );
