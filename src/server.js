@@ -2,11 +2,29 @@ const http = require('http');
 const iztro = require('iztro');
 const RetrievalService = require('../backend/services/retrievalService');
 
+// 加载环境变量
+require('dotenv').config({ path: require('path').join(__dirname, '../backend/.env') });
+
 const port = 3001;
 
 // 初始化检索服务
 const retrievalService = new RetrievalService();
 retrievalService.initialize().catch(console.error);
+
+// 鉴权中间件 - Bearer Token 标准格式
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  // 提取 Bearer 后面的实际 token
+  const token = authHeader && authHeader.split(' ')[1];
+  
+  if (!token || token !== process.env.AUTH_CODE) {
+    res.statusCode = 401;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ error: '功德码无效或已过期' }));
+    return;
+  }
+  next();
+}
 
 // 解析 JSON 请求体的函数
 function parseRequestBody(req) {
@@ -159,6 +177,39 @@ const server = http.createServer(async (req, res) => {
 
     } catch (error) {
       console.error('RAG test error:', error);
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: error.message }));
+    }
+    return;
+  }
+
+  // 验证邀请码接口
+  if (req.method === 'POST' && req.url === '/api/verify-code') {
+    try {
+      const body = await parseRequestBody(req);
+      const { code } = body;
+      
+      if (!code) {
+        res.statusCode = 400;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: '请输入邀请码' }));
+        return;
+      }
+
+      // 验证邀请码
+      if (code === process.env.AUTH_CODE) {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ success: true, message: '验证成功' }));
+      } else {
+        res.statusCode = 401;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ error: '邀请码错误' }));
+      }
+
+    } catch (error) {
+      console.error('Verify code error:', error);
       res.statusCode = 500;
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify({ error: error.message }));

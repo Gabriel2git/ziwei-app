@@ -2,465 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================
-   东方赛博命理 - 全局样式
-   Oriental Cyber Divination Design System
-   ============================================ */
-
-/* CSS 变量定义 */
 :root {
-  /* 赛博命理色彩系统 */
-  --neon-cyan: #00f3ff;
-  --neon-pink: #ff00ff;
-  --neon-purple: #b300ff;
-  --neon-gold: #ffd700;
-  --deep-purple: #1a0b2e;
-  --midnight-blue: #0d1117;
-  --indigo: #2d1b4e;
-  --void-black: #050508;
-  
-  /* 功能色 */
-  --success: #00ff88;
-  --warning: #ffaa00;
-  --error: #ff3366;
-  --info: #00f3ff;
-  
-  /* 背景 */
-  --background: var(--void-black);
-  --foreground: #e0f0f0;
-  --surface: rgba(45, 27, 78, 0.6);
-  --surface-hover: rgba(45, 27, 78, 0.8);
-  
-  /* 边框 */
-  --border-glow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan), 0 0 30px var(--neon-cyan);
-  --border-subtle: 1px solid rgba(0, 243, 255, 0.2);
+  --background: #ffffff;
+  --foreground: #171717;
 }
 
-/* 深色模式（默认） */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: var(--void-black);
-    --foreground: #e0f0f0;
-  }
-}
-
+/* 强制深色模式为紫薇派风格 - 需要通过添加 .dark 类来启用 */
 .dark {
-  --background: var(--void-black);
+  --background: #0f1a1a;
   --foreground: #e0f0f0;
-}
-
-/* 基础样式 */
-* {
-  box-sizing: border-box;
-}
-
-html {
-  scroll-behavior: smooth;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
-  min-height: 100vh;
-  overflow-x: hidden;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-/* ============================================
-   星空背景动画
-   ============================================ */
-@keyframes twinkle {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 1; }
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { 
-    box-shadow: 0 0 5px var(--neon-cyan), 0 0 10px var(--neon-cyan);
-  }
-  50% { 
-    box-shadow: 0 0 20px var(--neon-cyan), 0 0 40px var(--neon-cyan), 0 0 60px var(--neon-cyan);
-  }
-}
-
-@keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-
-@keyframes glitch {
-  0% { clip-path: inset(40% 0 61% 0); transform: translate(-2px, 2px); }
-  20% { clip-path: inset(92% 0 1% 0); transform: translate(2px, -2px); }
-  40% { clip-path: inset(43% 0 1% 0); transform: translate(-2px, 2px); }
-  60% { clip-path: inset(25% 0 58% 0); transform: translate(2px, -2px); }
-  80% { clip-path: inset(54% 0 7% 0); transform: translate(-2px, 2px); }
-  100% { clip-path: inset(58% 0 43% 0); transform: translate(2px, -2px); }
-}
-
-@keyframes typewriter {
-  from { width: 0; }
-  to { width: 100%; }
-}
-
-@keyframes blink {
-  50% { border-color: transparent; }
-}
-
-/* 流动光线动画 - 用于四化 */
-@keyframes flowing-light {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-.flowing-light-animation {
-  animation: flowing-light 2s linear infinite;
-}
-
-/* ============================================
-   工具类
-   ============================================ */
 @layer utilities {
-  /* 文字平衡 */
   .text-balance {
     text-wrap: balance;
   }
   
-  /* 霓虹发光效果 */
-  .neon-glow {
-    box-shadow: 0 0 5px var(--neon-cyan), 0 0 10px var(--neon-cyan);
-  }
-  
-  .neon-glow-pink {
-    box-shadow: 0 0 5px var(--neon-pink), 0 0 10px var(--neon-pink);
-  }
-  
-  .neon-glow-purple {
-    box-shadow: 0 0 5px var(--neon-purple), 0 0 10px var(--neon-purple);
-  }
-  
-  .neon-glow-gold {
-    box-shadow: 0 0 5px var(--neon-gold), 0 0 10px var(--neon-gold);
-  }
-  
-  /* 文字霓虹效果 */
-  .neon-text {
-    text-shadow: 0 0 5px var(--neon-cyan), 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
-  }
-  
-  .neon-text-pink {
-    text-shadow: 0 0 5px var(--neon-pink), 0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink);
-  }
-  
-  /* 玻璃拟态 */
-  .glass {
-    background: rgba(45, 27, 78, 0.4);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 243, 255, 0.2);
-  }
-  
-  .glass-strong {
-    background: rgba(45, 27, 78, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(0, 243, 255, 0.3);
-  }
-  
-  /* 渐变背景 */
-  .gradient-cyber {
-    background: linear-gradient(135deg, var(--deep-purple) 0%, var(--indigo) 50%, var(--midnight-blue) 100%);
-  }
-  
-  .gradient-neon {
-    background: linear-gradient(90deg, var(--neon-cyan), var(--neon-pink), var(--neon-purple));
-  }
-  
-  /* 故障艺术 */
-  .glitch {
-    position: relative;
-  }
-  
-  .glitch::before,
-  .glitch::after {
-    content: attr(data-text);
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
-  
-  .glitch::before {
-    animation: glitch 2s infinite linear alternate-reverse;
-    color: var(--neon-pink);
-    z-index: -1;
-  }
-  
-  .glitch::after {
-    animation: glitch 3s infinite linear alternate-reverse;
-    color: var(--neon-cyan);
-    z-index: -2;
-  }
-  
-  /* 扫描线效果 */
-  .scanlines::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0, 243, 255, 0.03) 2px,
-      rgba(0, 243, 255, 0.03) 4px
-    );
-    pointer-events: none;
-    z-index: 10;
-  }
-  
-  /* 浮动动画 */
-  .float {
-    animation: float 6s ease-in-out infinite;
-  }
-  
-  /* 脉动发光 */
-  .pulse-glow {
-    animation: pulse-glow 2s ease-in-out infinite;
-  }
-  
-  /* 打字机效果 */
-  .typewriter {
-    overflow: hidden;
-    white-space: nowrap;
-    border-right: 2px solid var(--neon-cyan);
-    animation: 
-      typewriter 3s steps(40, end),
-      blink 0.75s step-end infinite;
-  }
-  
-  /* 自定义滚动条 */
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: rgba(45, 27, 78, 0.3);
-    border-radius: 4px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, var(--neon-cyan), var(--neon-purple));
-    border-radius: 4px;
-  }
-  
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, var(--neon-pink), var(--neon-cyan));
-  }
-  
-  /* 星曜颜色 */
+  /* 紫薇派风格的星星颜色 */
   .star-red {
     color: #ff4444;
-    text-shadow: 0 0 5px #ff4444;
   }
-  
   .star-green {
     color: #44ff44;
-    text-shadow: 0 0 5px #44ff44;
   }
-  
   .star-blue {
     color: #4444ff;
-    text-shadow: 0 0 5px #4444ff;
   }
-  
   .star-yellow {
     color: #ffff44;
-    text-shadow: 0 0 5px #ffff44;
   }
-  
   .star-purple {
     color: #ff44ff;
-    text-shadow: 0 0 5px #ff44ff;
   }
   
-  .star-cyan {
-    color: var(--neon-cyan);
-    text-shadow: 0 0 5px var(--neon-cyan);
-  }
-
-  .star-gold {
-    color: #ffd700;
-    text-shadow: 0 0 5px #ffd700;
+  /* 紫薇派风格的线条 */
+  .ziwei-border {
+    border-color: #ff6600;
   }
   
-  /* 边框发光 */
-  .border-glow {
-    border: 1px solid rgba(0, 243, 255, 0.5);
-    box-shadow: 
-      inset 0 0 10px rgba(0, 243, 255, 0.1),
-      0 0 10px rgba(0, 243, 255, 0.3);
+  /* 紫薇派风格的背景 */
+  .ziwei-bg {
+    background-color: #0f1a1a;
   }
   
-  /* 3D 透视 */
-  .perspective-1000 {
-    perspective: 1000px;
-  }
-  
-  .preserve-3d {
-    transform-style: preserve-3d;
-  }
-  
-  /* 隐藏但可访问 */
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
-  }
-}
-
-/* ============================================
-   组件样式
-   ============================================ */
-@layer components {
-  /* 赛博按钮 */
-  .cyber-button {
-    @apply relative px-6 py-3 font-bold text-white transition-all duration-300;
-    background: linear-gradient(135deg, rgba(0, 243, 255, 0.2), rgba(179, 0, 255, 0.2));
-    border: 1px solid var(--neon-cyan);
-    box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
-  }
-  
-  .cyber-button:hover {
-    background: linear-gradient(135deg, rgba(0, 243, 255, 0.4), rgba(179, 0, 255, 0.4));
-    box-shadow: 0 0 20px rgba(0, 243, 255, 0.6), 0 0 40px rgba(0, 243, 255, 0.3);
-    transform: translateY(-2px);
-  }
-  
-  .cyber-button:active {
-    transform: translateY(0);
-  }
-  
-  /* 赛博卡片 */
-  .cyber-card {
-    @apply relative p-6 rounded-lg;
-    background: rgba(45, 27, 78, 0.4);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(0, 243, 255, 0.2);
-    box-shadow: 
-      0 4px 30px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  }
-  
-  .cyber-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
-  }
-  
-  /* 赛博输入框 */
-  .cyber-input {
-    @apply w-full px-4 py-3 text-white bg-transparent outline-none;
-    border: 1px solid rgba(0, 243, 255, 0.3);
-    border-radius: 4px;
-    transition: all 0.3s ease;
-  }
-  
-  .cyber-input:focus {
-    border-color: var(--neon-cyan);
-    box-shadow: 0 0 10px rgba(0, 243, 255, 0.3), inset 0 0 10px rgba(0, 243, 255, 0.1);
-  }
-  
-  /* 终端风格 */
-  .terminal {
-    @apply p-4 font-mono text-sm;
-    background: rgba(5, 5, 8, 0.9);
-    border: 1px solid rgba(0, 243, 255, 0.3);
-    border-radius: 8px;
-  }
-  
-  .terminal::before {
-    content: '> ';
-    color: var(--neon-cyan);
-  }
-  
-  /* 全息卡片 */
-  .hologram-card {
-    @apply relative overflow-hidden;
-    background: linear-gradient(135deg, 
-      rgba(0, 243, 255, 0.1), 
-      rgba(255, 0, 255, 0.1),
-      rgba(179, 0, 255, 0.1)
-    );
-    border: 1px solid rgba(0, 243, 255, 0.3);
-  }
-  
-  .hologram-card::after {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(
-      45deg,
-      transparent 30%,
-      rgba(0, 243, 255, 0.1) 50%,
-      transparent 70%
-    );
-    animation: hologram-shine 3s ease-in-out infinite;
-  }
-}
-
-/* 全息光泽动画 */
-@keyframes hologram-shine {
-  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-  100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-}
-
-/* ============================================
-   响应式断点
-   ============================================ */
-@media (max-width: 768px) {
-  :root {
-    --font-size-base: 14px;
-  }
-}
-
-/* ============================================
-   打印样式
-   ============================================ */
-@media print {
-  body {
-    background: white;
-    color: black;
-  }
-  
-  .neon-text,
-  .neon-glow {
-    text-shadow: none;
-    box-shadow: none;
+  /* 紫薇派风格的文字 */
+  .ziwei-text {
+    color: #e0f0f0;
   }
 }

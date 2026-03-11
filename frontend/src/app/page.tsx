@@ -8,9 +8,8 @@ import { useAIChat } from '@/hooks/useAIChat';
 import { useSavedCases } from '@/hooks/useSavedCases';
 import Sidebar from '@/components/Sidebar';
 import ChartView from '@/components/ChartView';
-import AIChat from '@/components/AIChat';
 import RagTest from '@/components/RagTest';
-import PersonaSelector from '@/components/PersonaSelector';
+import AIFortuneTeller from '@/components/AIFortuneTeller';
 
 // 扩展页面类型
 type PageType = '命盘显示' | 'AI 命理师' | 'RAG 测试';
@@ -210,62 +209,26 @@ export default function Home() {
               onTestAIPrompt={handleTestAIPrompt}
             />
           ) : currentPage === 'AI 命理师' ? (
-            <div className="h-full flex flex-col">
-              {/* Persona 选择器 - 仅在开始对话前显示 */}
-              {messages.length === 0 && (
-                <div className="flex-shrink-0 mb-4">
-                  <PersonaSelector
-                    selectedPersona={selectedPersona}
-                    onPersonaChange={setSelectedPersona}
-                  />
-                </div>
-              )}
-              {/* 已选择 Persona 的提示 */}
-              {messages.length > 0 && (
-                <div className="flex-shrink-0 mb-4 px-4 py-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700 dark:text-gray-300">
-                      当前命理师:
-                      <span className="font-bold ml-2">
-                        {selectedPersona === 'companion' && '🤗 大白话解盘伴侣'}
-                        {selectedPersona === 'mentor' && '🎓 硬核紫微导师'}
-                        {selectedPersona === 'healer' && '🌿 人生导航与疗愈师'}
-                      </span>
-                    </span>
-                    <button
-                      onClick={() => {
-                        // 重置聊天以允许重新选择 persona
-                        if (confirm('切换命理师将重新开始对话，是否继续？')) {
-                          setMessages([]);
-                        }
-                      }}
-                      className="text-xs text-purple-600 dark:text-purple-400 hover:underline"
-                    >
-                      切换命理师
-                    </button>
-                  </div>
-                </div>
-              )}
-              <div className="flex-1 min-h-0">
-                <AIChat
-                  messages={messages}
-                  inputMessage={inputMessage}
-                  setInputMessage={setInputMessage}
-                  isLoading={isLoading}
-                  debugPrompt={debugPrompt}
-                  showDebug={showDebug}
-                  setShowDebug={setShowDebug}
-                  selectedModel={selectedModel}
-                  hasBirthData={hasBirthData}
-                  birthData={birthData}
-                  messagesEndRef={messagesEndRef}
-                  messagesContainerRef={messagesContainerRef}
-                  onSendMessage={() => sendMessage(selectedModel)}
-                  onKeyPress={handleKeyPress}
-                  onSaveHistory={() => saveChatHistory(birthData?.birthday || '', birthData?.gender || '')}
-                  onLoadHistory={loadChatHistory}
-                />
-              </div>
+            <div className="h-full">
+              <AIFortuneTeller
+                messages={messages}
+                inputMessage={inputMessage}
+                setInputMessage={setInputMessage}
+                isLoading={isLoading}
+                debugPrompt={debugPrompt}
+                showDebug={showDebug}
+                setShowDebug={setShowDebug}
+                selectedModel={selectedModel}
+                hasBirthData={hasBirthData}
+                birthData={birthData}
+                messagesEndRef={messagesEndRef}
+                messagesContainerRef={messagesContainerRef}
+                onSendMessage={() => sendMessage(selectedModel)}
+                onKeyPress={handleKeyPress}
+                onSaveHistory={() => saveChatHistory(birthData?.birthday || '', birthData?.gender || '')}
+                onLoadHistory={loadChatHistory}
+                setMessages={setMessages}
+              />
             </div>
           ) : (
             <RagTest onBack={() => setCurrentPage('AI 命理师')} />
