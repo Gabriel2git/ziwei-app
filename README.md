@@ -1,4 +1,4 @@
-# AI 紫微斗数 Pro
+# FatePilot
 
 一个基于 React + Next.js 和 Node.js 的智能紫微斗数命理分析应用，集成 AI 命理师功能和 RAG 检索增强生成能力。
 
