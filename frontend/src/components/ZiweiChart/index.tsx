@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿import React from 'react';
+﻿﻿﻿﻿﻿﻿﻿﻿import React from 'react';
 import PalaceCell from './PalaceCell';
 import CenterInfo from './CenterInfo';
 import { EARTHLY_BRANCHES, GRID_MAPPING } from './constants';
