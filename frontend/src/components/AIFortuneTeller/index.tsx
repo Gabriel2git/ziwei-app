@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿'use client';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿'use client';
 
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
@@ -70,7 +70,7 @@ function AIFortuneTellerContent({
 
   if (currentView === 'select-persona') {
     return (
-      <div className="h-full flex flex-col">
+      <div className="h-full min-h-0 flex flex-col overflow-y-auto show-scrollbar pb-20 md:pb-0">
         <PersonaSelector
           selectedPersona={selectedPersona}
           onPersonaChange={(persona) => {
@@ -91,7 +91,7 @@ function AIFortuneTellerContent({
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full min-h-0 flex flex-col overflow-hidden">
       <div className="flex-shrink-0 mb-4 px-4 py-2 bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-900/30 dark:to-blue-900/30 rounded-lg">
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-700 dark:text-gray-300">
@@ -116,7 +116,7 @@ function AIFortuneTellerContent({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-hidden">
         <AIChat
           messages={messages}
           inputMessage={inputMessage}

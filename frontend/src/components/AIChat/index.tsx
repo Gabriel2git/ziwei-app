@@ -106,7 +106,7 @@ export default function AIChat({
   }, [isLoading]);
 
   return (
-    <div className="h-full flex flex-col relative pb-16 md:pb-0">
+    <div className="h-full min-h-0 flex flex-col relative pb-20 md:pb-0">
       <div className="flex justify-between items-center mb-2 sm:mb-4">
         <h2 className="text-sm sm:text-xl font-bold text-gray-900 dark:text-gray-100">AI 命理师</h2>
         <div className="flex gap-2 items-center">
@@ -164,7 +164,7 @@ export default function AIChat({
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto bg-white dark:bg-[#1a2a2a] rounded-2xl shadow-2xl p-2 sm:p-6 mb-2 sm:mb-4 relative"
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain show-scrollbar bg-white dark:bg-[#1a2a2a] rounded-2xl shadow-2xl p-2 sm:p-6 mb-2 sm:mb-4 relative"
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">

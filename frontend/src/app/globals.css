@@ -55,4 +55,28 @@ body {
   .ziwei-text {
     color: #e0f0f0;
   }
+
+  .show-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #a855f7 rgba(229, 231, 235, 0.8);
+  }
+
+  .show-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .show-scrollbar::-webkit-scrollbar-track {
+    background: rgba(229, 231, 235, 0.6);
+    border-radius: 9999px;
+  }
+
+  .show-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #a855f7, #6366f1);
+    border-radius: 9999px;
+  }
+
+  .dark .show-scrollbar::-webkit-scrollbar-track {
+    background: rgba(55, 65, 81, 0.75);
+  }
 }

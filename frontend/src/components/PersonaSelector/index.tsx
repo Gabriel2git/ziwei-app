@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿'use client';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿'use client';
 
 import React, { useState } from 'react';
 import { PERSONA_CONFIGS, PersonaType } from '@/lib/ai';
@@ -18,15 +18,15 @@ export default function PersonaSelector({ selectedPersona, onPersonaChange }: Pe
   const selectedConfig = PERSONA_CONFIGS.find((item) => item.id === tempSelection);
 
   return (
-    <div className="w-full max-w-6xl mx-auto p-2 sm:p-6">
-      <div className="text-center mb-6 sm:mb-8">
+    <div className="w-full max-w-6xl mx-auto p-2 sm:p-6 pb-20 md:pb-8">
+      <div className="text-center mb-4 sm:mb-8">
         <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white mb-1">选择你的 AI 命理师</h2>
         <p className="text-xs sm:text-base text-gray-600 dark:text-gray-400">
           不同命理师有不同解读风格，选择最适合你的方式
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6 mb-4 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-6 mb-3 sm:mb-4 w-full">
         {PERSONA_CONFIGS.map((config) => {
           const isSelected = tempSelection === config.id;
 
@@ -35,8 +35,8 @@ export default function PersonaSelector({ selectedPersona, onPersonaChange }: Pe
               key={config.id}
               onClick={() => setTempSelection(config.id)}
               className={`
-                relative w-full p-3 sm:p-6 rounded-xl sm:rounded-2xl border-2 transition-all duration-300 cursor-pointer
-                hover:shadow-lg hover:scale-[1.01] bg-white dark:bg-gray-800 min-h-[230px] sm:min-h-[280px]
+                relative w-full p-3 sm:p-5 lg:p-6 rounded-xl sm:rounded-2xl border-2 transition-all duration-300 cursor-pointer
+                hover:shadow-lg md:hover:scale-[1.01] bg-white dark:bg-gray-800 min-h-[176px] sm:min-h-[240px] lg:min-h-[280px]
                 ${
                   isSelected
                     ? 'border-purple-500 shadow-xl ring-1 ring-purple-500'
@@ -52,15 +52,15 @@ export default function PersonaSelector({ selectedPersona, onPersonaChange }: Pe
                 </div>
               )}
 
-              <div className="text-2xl sm:text-5xl mb-2 sm:mb-4">{config.icon}</div>
+              <div className="text-xl sm:text-4xl lg:text-5xl mb-1.5 sm:mb-3">{config.icon}</div>
 
-              <h3 className={`text-sm sm:text-lg mb-0.5 text-gray-900 dark:text-gray-100 ${isSelected ? 'font-bold' : 'font-semibold'}`}>
+              <h3 className={`text-base sm:text-lg mb-0.5 text-gray-900 dark:text-gray-100 ${isSelected ? 'font-bold' : 'font-semibold'}`}>
                 {config.name}
               </h3>
 
-              <p className="text-[10px] mb-2 sm:mb-3 font-medium text-gray-500 dark:text-gray-400">{config.title}</p>
+              <p className="text-[11px] sm:text-xs mb-1.5 sm:mb-3 font-medium text-gray-500 dark:text-gray-400">{config.title}</p>
 
-              <p className="text-sm leading-relaxed text-gray-600 dark:text-gray-300">{config.description}</p>
+              <p className="text-[13px] sm:text-sm leading-5 sm:leading-relaxed text-gray-600 dark:text-gray-300">{config.description}</p>
             </div>
           );
         })}

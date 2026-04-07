@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿'use client';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AI_MODELS } from '@/lib/ai';
@@ -235,7 +235,7 @@ export default function Home() {
   ] as const;
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-purple-50 to-blue-50 dark:from-[#0f1a1a] dark:to-[#0a1414]">
+    <div className="h-[100dvh] md:h-screen overflow-hidden bg-gradient-to-br from-purple-50 to-blue-50 dark:from-[#0f1a1a] dark:to-[#0a1414]">
       {/* 顶部二级导航栏 */}
       <header className="hidden md:flex items-center justify-between px-6 py-3 bg-white dark:bg-[#1a2a2a] border-b border-gray-200 dark:border-gray-700 shadow-sm z-20">
         <div className="flex items-center gap-8">
@@ -274,7 +274,7 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="flex h-[calc(100vh-56px)]">
+      <div className="flex h-full md:h-[calc(100vh-56px)] min-h-0">
         <div ref={sidebarRef} className="hidden md:block relative flex-shrink-0" style={{ width: sidebarWidth }}>
           <Sidebar
             currentPage={currentPage}
@@ -320,7 +320,7 @@ export default function Home() {
           </>
         )}
 
-        <main className="flex-1 p-1 md:p-6 overflow-hidden pb-16 md:pb-6">
+        <main className="flex-1 min-h-0 p-1 md:p-6 overflow-y-auto md:overflow-hidden show-scrollbar pb-20 md:pb-6">
           {error && (
             <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg dark:bg-red-900/30 dark:border-red-800 dark:text-red-400">
               <div className="flex items-center">
@@ -360,7 +360,7 @@ export default function Home() {
               onTestAIPrompt={handleTestAIPrompt}
             />
           ) : currentPage === 'ai' ? (
-            <div className="h-full">
+            <div className="h-full min-h-0 overflow-y-auto md:overflow-hidden show-scrollbar">
               <AIFortuneTeller
                 messages={messages}
                 inputMessage={inputMessage}
